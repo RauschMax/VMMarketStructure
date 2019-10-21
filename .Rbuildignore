@@ -1,0 +1,6 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^inst/psbuild$
+^inst/psbuild/InstallDeps\.R$
+^inst/psbuild/PackBuild\.ps1$
+^inst/psbuild/PackTests\.R$
