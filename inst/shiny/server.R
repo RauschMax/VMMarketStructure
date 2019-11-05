@@ -274,13 +274,26 @@ server <- function(input, output, session) {
 
   # Combinations !------------------------------------------------------------------------------------------------------
   output$portTable <- DT::renderDataTable({
-    DT::datatable(combs, selection = list(mode = 'single', target = 'row'),
-                  filter = "none", autoHideNavigation = TRUE, rownames = FALSE,
+
+    combs <- dataIN()$SKU_choice_DT[, .(.N), by = .(Att1, Att2, Att3, Att4, Att5, Att6, Att7, Att8)][order(-N)]
+
+    combs_labels <- data.table(sapply(1:length(defIN()$nlev_asd),
+                                      function(x) {
+                                        sapply(unlist(combs[, x, with = FALSE]),
+                                               function(y) {
+                                                 do.call(switch, c(y, as.list(defIN()$attLev_asd[[x]])))
+                                               })
+                                      }))
+    combs_labels$N <- combs$N
+    # names(combs_labels) <- names(defIN()$attLev_asd)
+
+    DT::datatable(combs_labels, selection = list(mode = 'single', target = 'row'),
+                  filter = "none", autoHideNavigation = TRUE, rownames = TRUE,
                   escape = FALSE, style = "default", class = 'compact',
-                  options = list(pageLength = 25,
+                  options = list(pageLength = 10,
                                  dom = 'Blrtip',
                                  buttons = c('csv', 'excel'),
-                                 order = list(list(3, 'desc')),
+                                 order = list(list(ncol(combs), 'desc')),
                                  initComplete = JS(
                                    "function(settings, json) {",
                                    "$(this.api().table().header()).css({'background-color': '#989898',
@@ -292,9 +305,11 @@ server <- function(input, output, session) {
 
   output$portGRID <- DT::renderDataTable({
 
+    combs <- dataIN()$SKU_choice_DT[, .(.N), by = .(Att1, Att2, Att3, Att4, Att5, Att6, Att7, Att8)][order(-N)]
+
     helpVec <- rep(NA, 100)
-    helpVec[1:min(100, length(combs$freq))] <- sort(combs$freq, decreasing = TRUE)[1:min(100, length(combs$freq))]
-    helpVec[!is.na(helpVec)] <- 1
+    helpVec[1:min(100, length(combs$N))] <- sort(combs$N, decreasing = TRUE)[1:min(100, length(combs$N))]
+    # helpVec[!is.na(helpVec)] <- 1
     dt <- data.table(matrix(helpVec, nrow = 10, ncol = 10, byrow = TRUE))
 
     DT::datatable(dt, selection = list(mode = 'single', target = 'cell'),
@@ -316,28 +331,30 @@ server <- function(input, output, session) {
                   backgroundSize = '90% 80%',
                   backgroundRepeat = 'no-repeat',
                   backgroundPosition = 'center') %>%
-      formatRound(names(dt),  digits = 2)
+      formatRound(names(dt),  digits = 0)
   })
 
   output$portGRID2 <- renderFormattable({
 
+    combs <- dataIN()$SKU_choice_DT[, .(.N), by = .(Att1, Att2, Att3, Att4, Att5, Att6, Att7, Att8)][order(-N)]
+
     helpVec <- rep(NA, 100)
-    helpVec[1:min(100, length(combs$freq))] <- sort(combs$freq, decreasing = TRUE)[1:min(100, length(combs$freq))]
-    helpVec[!is.na(helpVec)] <- 1
+    helpVec[1:min(100, length(combs$N))] <- sort(combs$N, decreasing = TRUE)[1:min(100, length(combs$N))]
+    # helpVec[!is.na(helpVec)] <- 1
     helpVec[is.na(helpVec)] <- 0
     dt <- data.table(matrix(helpVec, nrow = 10, ncol = 10, byrow = TRUE))
 
     formattable(dt, list(
-      V1 = color_tile("white", "#f2da64"),
-      V2 = color_tile("white", "#f2da64"),
-      V3 = color_tile("white", "#f2da64"),
-      V4 = color_tile("white", "#f2da64"),
-      V5 = color_tile("white", "#f2da64"),
-      V6 = color_tile("white", "#f2da64"),
-      V7 = color_tile("white", "#f2da64"),
-      V8 = color_tile("white", "#f2da64"),
-      V9 = color_tile("white", "#f2da64"),
-      V10 = color_tile("white", "#f2da64")
+      V1 = color_tile("#f2da64", "#f2da64"),
+      V2 = color_tile("#f2da64", "#f2da64"),
+      V3 = color_tile("#f2da64", "#f2da64"),
+      V4 = color_tile("#f2da64", "#f2da64"),
+      V5 = color_tile("#f2da64", "#f2da64"),
+      V6 = color_tile("#f2da64", "#f2da64"),
+      V7 = color_tile("#f2da64", "#f2da64"),
+      V8 = color_tile("#f2da64", "#f2da64"),
+      V9 = color_tile("#f2da64", "#f2da64"),
+      V10 = color_tile("#f2da64", "#f2da64")
     ))
 
   })

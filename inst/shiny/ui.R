@@ -103,8 +103,9 @@ ui <- kantarPage(
 
       tabItem(
         tabName = 'portfolio',
-        kantarBox(div(style = "overflow-y: scroll; height: 88vh; font-size: 80%",
-                      DT::dataTableOutput("portTable"))),
+        kantarBox(div(style = "overflow-y: scroll; height: 40vh; font-size: 80%",
+                      DT::dataTableOutput("portTable")),
+                  width = 12),
         kantarBox(DT::dataTableOutput("portGRID")),
         kantarBox(formattableOutput("portGRID2"))
       )
