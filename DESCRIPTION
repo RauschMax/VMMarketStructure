@@ -1,9 +1,9 @@
 Package: VMDecisionTree
 Type: Package
-Title: Market structure or decision tree analysis
+Title: Market structure analysis
 Version: 0.1.0
-Description: A decision tree provides clarity for what benefits and attributes are most important and which products 
-             provide the most incrementality based on where they fall in the structure.
+Description: The market structure provides clarity for what benefits and attributes are most 
+             important and which products provide the most incrementality based on where they fall in the structure.
 Authors@R: person("Maximilian", "Rausch", email = "maximilian.rausch@kantar.com", role = c("aut", "cre"))
 License: file LICENSE
 URL: https://kantarware.visualstudio.com/KT-BeastRepo/_git/VMDecisionTree
@@ -14,7 +14,12 @@ Suggests: testthat,
     shiny,
     shinydashboard,
     kantardashboard,
-    KTShiny
+    KTShiny,
+    networkD3,
+    data.table,
+    formattable,
+    DT,
+    treemap
 KTRemotes: KTShiny,
     kantardashboard
 RoxygenNote: 6.0.1

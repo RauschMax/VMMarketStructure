@@ -3,6 +3,9 @@ library(shiny)
 library(shinydashboard)
 library(kantardashboard)
 library(KTShiny)
+library(formattable)
+library(networkD3)
+library(treemap)
 #Add all required packages here
 
 ####Active Directory####
@@ -48,6 +51,8 @@ ui <- kantarPage(
   sidebar = sidebarMenu(
     menuItem(tabName = 'home', text = 'Overview', icon = icon('home'), selected = TRUE),
     menuItem(tabName = 'decision', text = 'decision matrix', icon = icon('tree')),
+    menuItem(tabName = 'sankey', text = 'Sankey Diagram', icon = icon('tree')),
+    menuItem(tabName = 'tree', text = 'Treemap', icon = icon('tree')),
     menuItem(tabName = 'portfolio', text = 'Portfolio Rankings', icon = icon('trophy'))
   ),
 
@@ -85,15 +90,29 @@ ui <- kantarPage(
 
 
       tabItem(
+        tabName = 'sankey',
+        sankeyNetworkOutput("Sankey")
+      ),
+
+
+      tabItem(
+        tabName = 'tree',
+        plotOutput("treemap")
+      ),
+
+
+      tabItem(
         tabName = 'portfolio',
-        h2(),
-        uiOutput("portfolioUI")
+        kantarBox(div(style = "overflow-y: scroll; height: 88vh; font-size: 80%",
+                      DT::dataTableOutput("portTable"))),
+        kantarBox(DT::dataTableOutput("portGRID")),
+        kantarBox(formattableOutput("portGRID2"))
       )
     )
   ),
 
   #Title change from default
-  title = 'Market Structure Decision Tree'
+  title = 'Market Structure'
 )
 
 # KTShiny::kantar_auth_ui(ui = ui, app_id = app_id)
