@@ -23,7 +23,7 @@ server <- function(input, output, session) {
   def <- readLines("www/VersicherungsCase.def", encoding = "UTF-8")
 
   # choices, combinations and ranks
-  SKU_choice_DT <- fread("www/simulated_data_VersicherungsCase_ASD.csv")
+  SKU_choice_DT <- data.table::fread("www/simulated_data_VersicherungsCase_ASD.csv")
 
   # DATA READ COMPLETED !-----------------------------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ server <- function(input, output, session) {
 
     # ASD adjustments
     attLev_asd <- attLev[-(3:5)]
-    attLev_asd$Jahresbeitrag <- paste0(rep(names(attLev[3:5]), nlev[3:5]), " - ",sequence(nlev[3:5]))
+    attLev_asd$Jahresbeitrag <- paste0(rep(names(attLev[3:5]), nlev[3:5]), " - ", sequence(nlev[3:5]))
     attLev_asd <- attLev_asd[c(1, 2, length(attLev_asd), 3:(length(attLev_asd) - 1))]
     nlev_asd <- sapply(attLev_asd, length)
 
@@ -126,7 +126,7 @@ server <- function(input, output, session) {
 
     list(SKU_choice_freq = SKU_choice_DT[, .(.N), by = .(Comb)][order(-N)],
          SKUs_per_person = SKU_choice_DT[, lapply(.SD, list), by = ID,
-                                         .SDcols = c("Comb")])
+                                         .SDcols = "Comb"])
 
   })
   # DATA extracted !----------------------------------------------------------------------------------------------------
@@ -263,7 +263,7 @@ server <- function(input, output, session) {
 
     # treemap
     treemap(data,
-            index = c("group","subgroup"),
+            index = c("group", "subgroup"),
             vSize = "value",
             type = "index"
     )
@@ -310,7 +310,7 @@ server <- function(input, output, session) {
     helpVec <- rep(NA, 100)
     helpVec[1:min(100, length(combs$N))] <- sort(combs$N, decreasing = TRUE)[1:min(100, length(combs$N))]
     # helpVec[!is.na(helpVec)] <- 1
-    dt <- data.table(matrix(helpVec, nrow = 10, ncol = 10, byrow = TRUE))
+    dt <- data.table::data.table(matrix(helpVec, nrow = 10, ncol = 10, byrow = TRUE))
 
     DT::datatable(dt, selection = list(mode = 'single', target = 'cell'),
                   filter = "none", autoHideNavigation = TRUE, rownames = TRUE,
@@ -342,7 +342,7 @@ server <- function(input, output, session) {
     helpVec[1:min(100, length(combs$N))] <- sort(combs$N, decreasing = TRUE)[1:min(100, length(combs$N))]
     # helpVec[!is.na(helpVec)] <- 1
     helpVec[is.na(helpVec)] <- 0
-    dt <- data.table(matrix(helpVec, nrow = 10, ncol = 10, byrow = TRUE))
+    dt <- data.table::data.table(matrix(helpVec, nrow = 10, ncol = 10, byrow = TRUE))
 
     formattable(dt, list(
       V1 = color_tile("#f2da64", "#f2da64"),

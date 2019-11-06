@@ -1,0 +1,22 @@
+linters: list(
+  assignment_linter = assignment_linter,
+  closed_curly_linter = closed_curly_linter(TRUE),
+  commas_linter = BeastDevTools::commas_linter,
+  infix_spaces_linter = infix_spaces_linter,
+  line_length_linter = line_length_linter(120),
+  multiple_dots_linter = multiple_dots_linter,
+  no_tab_linter = no_tab_linter,
+  object_length_linter = object_length_linter(30),
+  object_usage_linter = object_usage_linter,
+  open_curly_linter = open_curly_linter(TRUE),
+  pipe_continuation_linter = BeastDevTools::pipe_continuation_linter,
+  semicolon_terminator_linter = BeastDevTools::semicolon_terminator_linter('trailing'),
+  spaces_inside_linter = spaces_inside_linter,
+  trailing_blank_lines_linter = trailing_blank_lines_linter,
+  trailing_whitespace_linter = trailing_whitespace_linter,
+  T_and_F_symbol_linter = BeastDevTools::T_and_F_symbol_linter,
+  unneeded_concatenation_linter = BeastDevTools::unneeded_concatenation_linter
+  )
+exclusions: as.list(grep('/(shiny|mrs|buildfiles)/', sub('\\./', '', list.files('./inst', '\\.[RrSs]$',
+                         full.names = TRUE, recursive = TRUE)),
+                    value = TRUE, invert = TRUE))

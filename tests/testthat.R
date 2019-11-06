@@ -1,4 +1,4 @@
 library(testthat)
-library(VMDecisionTree)
+library(VMMarketStructure)
 
-test_check("VMDecisionTree")
+test_check("VMMarketStructure")
