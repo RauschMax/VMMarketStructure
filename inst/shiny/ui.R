@@ -103,11 +103,15 @@ ui <- kantarPage(
 
       tabItem(
         tabName = 'portfolio',
-        kantarBox(div(style = "overflow-y: scroll; height: 40vh; font-size: 80%",
+        kantarBox(div(style = "overflow-y: scroll; height: 38vh; font-size: 80%",
                       DT::dataTableOutput("portTable")),
                   width = 12),
-        kantarBox(DT::dataTableOutput("portGRID")),
-        kantarBox(formattableOutput("portGRID2"))
+        kantarBox(div(style = "overflow-y: scroll; height: 45vh; font-size: 80%",
+                      DT::dataTableOutput("substitution"))),
+        kantarBox(div(style = "overflow-y: scroll; height: 45vh; font-size: 80%",
+                      verbatimTextOutput("test")))
+        # kantarBox(DT::dataTableOutput("portGRID")),
+        # kantarBox(formattableOutput("portGRID2"))
       )
     )
   ),
