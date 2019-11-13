@@ -327,6 +327,10 @@ server <- function(input, output, session) {
 
   output$substitution <- DT::renderDataTable({
 
+    validate(
+      need(!is.null(input$portTable_rows_selected), "Please select a combination in the table above.")
+    )
+
     indexCor <- which(combinations()$combs_labels[input$portTable_rows_selected, Combination] == colnames(corDist()))
 
     sortDist <- sort(corDist()[, indexCor], decreasing = TRUE)
@@ -359,7 +363,7 @@ server <- function(input, output, session) {
 
   output$test <- renderPrint({
 
-    which(combinations()$combs_labels[input$portTable_rows_selected, Combination] == colnames(corDist()))
+    input$portTable_rows_selected
 
 
   })
