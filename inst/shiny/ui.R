@@ -9,49 +9,67 @@ library(treemap)
 #Add all required packages here
 
 ####Active Directory####
-# app_id <- NULL # Azure Active Directory ID
+app_id <- NULL # Azure Active Directory ID
+
+options(shiny.port = 8100)
+# app_id <- '534994ee-483d-4797-9130-6e68a4d3d671'
+resource_id <- '642effb4-3a09-4b9a-8361-0dcf5eb4e9ed'
+app_url <- ifelse(interactive(), "http://localhost:8100", "http://10.236.230.79/BeastApps/VMMarketStructure/")
 
 ####USER INTERFACE####
 ui <- kantarPage(
   ####Header####
   #Title is Kantar Logo - DO NOT REMOVE
-  header = fluidRow(column(width = 12,
-                           tags$div(class = "head",
-                                    tags$div(class = "color-line nav-header"),
-                                    tags$div(class = "textMenu",
-                                             tags$span(class = "KT", "Kantar "),
-                                             tags$span(class = "kgold", 'MarketStructure')),
-                                    tags$div(class = "LogoMenu",
-                                             tags$img(class = "mb-3 mt-3 logo",
-                                                      src = web_dependencies$img),
-                                             tags$li(class = 'dropdown',
-                                                     tags$a(href = '#',
-                                                            class = 'dropdown-toggle', `data-toggle` = 'dropdown',
-                                                            tags$i(class = 'fa fa-sign-in')
-                                                     ),
-                                                     tags$ul(class = 'dropdown-menu',
-                                                             tags$li(actionButton("go", "GO")),
-                                                             tags$li(textInput("study", "Enter Study ID:")),
-                                                             tags$li(passwordInput("pw", "Enter Password:"))
-                                                     )),
-                                             tags$li(class = 'dropdown',
-                                                     tags$a(href = '#',
-                                                            class = 'dropdown-toggle', `data-toggle` = 'dropdown',
-                                                            tags$i(class = 'fa fa-envelope-o')
-                                                     ),
-                                                     tags$ul(class = 'dropdown-menu',
-                                                             tags$li(a(href = "mailto:choice.models@kantar.com",
-                                                                       HTML("Contact<br>ValueManager<br>Team")))
-                                                     )))
-                           )
+  header = fluidRow(
+    column(width = 12,
+           tags$div(class = "head",
+                    tags$div(class = "color-line nav-header"),
+                    tags$div(class = "textMenu",
+                             tags$span(class = "KT", "Kantar "),
+                             tags$span(class = "kgold", 'MarketStructure')),
+                    tags$div(class = "LogoMenu",
+                             tags$img(class = "mb-3 mt-3 logo",
+                                      src = web_dependencies$img),
+                             tags$li(class = 'dropdown',
+                                     tags$a(href = '#', class = 'dropdown-toggle', `data-toggle` = 'dropdown',
+                                            tags$i(class = 'fa fa-power-off')
+                                     ),
+                                     tags$ul(class = 'dropdown-menu',
+                                             tags$li(tags$li(actionLink('logout', 'Log out')))
+                                     )
+                             ),
+                             tags$li(class = 'dropdown',
+                                     tags$a(href = '#',
+                                            class = 'dropdown-toggle', `data-toggle` = 'dropdown',
+                                            tags$i(class = 'fa fa-info')
+                                     ),
+                                     tags$ul(class = 'dropdown-menu',
+                                             tags$li(a(href = "https://www.kantartns.de/valuemanager/index.asp",
+                                                       tags$i(class = 'fa fa-globe'),
+                                                       HTML(" ValueManager<br>Website"))),
+                                             tags$li(a(href = "https://www.kantardeutschland.de/impressum/",
+                                                       tags$i(class = 'fa fa-info'),
+                                                       HTML(" Impressum")))
+                                     )),
+                             tags$li(class = 'dropdown',
+                                     tags$a(href = '#',
+                                            class = 'dropdown-toggle', `data-toggle` = 'dropdown',
+                                            tags$i(class = 'fa fa-sign-in')
+                                     ),
+                                     tags$ul(class = 'dropdown-menu',
+                                             tags$li(actionButton("go", "GO")),
+                                             tags$li(textInput("study", "Enter Study ID:")),
+                                             tags$li(passwordInput("pw", "Enter Password:"))
+                                     )))
+           )
   )
   ),
 
   ####Sidebar####
   sidebar = sidebarMenu(
     menuItem(tabName = 'home', text = 'Overview', icon = icon('home'), selected = TRUE),
-    menuItem(tabName = 'decision', text = 'decision matrix', icon = icon('tree')),
-    menuItem(tabName = 'sankey', text = 'Sankey Diagram', icon = icon('tree')),
+    menuItem(tabName = 'decision', text = 'decision matrix', icon = icon('shopping-cart')),
+    menuItem(tabName = 'sankey', text = 'Sankey Diagram', icon = icon('road')),
     menuItem(tabName = 'tree', text = 'Treemap', icon = icon('tree')),
     menuItem(tabName = 'portfolio', text = 'Portfolio Rankings', icon = icon('trophy'))
   ),
@@ -61,7 +79,12 @@ ui <- kantarPage(
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
       tags$style(
-        HTML(".shiny-notification {position: fixed;
+        HTML(".shiny-input-container {margin-bottom:2px;
+                                      margin-top: 2px;
+                                      font-size:10px;}
+              .form-control {font-size:10px;
+                             height:20px;}
+              .shiny-notification {position: fixed;
                                    top: 33%;
                                    left: 33%;
                                    right: 33%;}
@@ -78,14 +101,27 @@ ui <- kantarPage(
       tabItem(
         tabName = 'home',
         h2(),
-        kantarBox(),
-        kantarBox()
+        kantarBox(uiOutput("attLev"))
       ),
 
 
       tabItem(
         tabName = 'decision',
-        uiOutput("decMatUI")
+        column(
+          div(style = "overflow-y:scroll; overflow-x:auto;
+                       height:92vh; font-size:80%",
+              uiOutput("decMatUI")
+              ),
+               width = 8),
+        kantarBox(title = "Selected Combination",
+          uiOutput("selComb"),
+          width = 4),
+        valueBoxOutput("demandBox", width = 4),
+        valueBoxOutput("supplyBox", width = 4),
+        valueBoxOutput("incrementBox", width = 4),
+        kantarBox(
+          verbatimTextOutput("test2"),
+          width = 4)
       ),
 
 
