@@ -26,7 +26,7 @@ observe({
                DT::formatStyle(columns = names(dt),
                                background = DT::styleColorBar(c(0, 1),
                                                               '#f2da64', angle = 270),
-                               backgroundSize = '90% 90%',
+                               backgroundSize = '98% 90%',
                                backgroundRepeat = 'no-repeat',
                                backgroundPosition = 'center')
            })

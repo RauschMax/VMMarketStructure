@@ -97,6 +97,11 @@ ui <- kantarPage(
                     margin-left: -15px;}"
         ))),
 
+    conditionalPanel("($('html').hasClass('shiny-busy'))",
+                     absolutePanel(style = "text-align:center; z-index:500;",
+                                   tags$img(src = 'loading_small.gif', width = '50px'),
+                                   fixed = TRUE, draggable = TRUE)),
+
     tabItems(
       tabItem(
         tabName = 'home',
