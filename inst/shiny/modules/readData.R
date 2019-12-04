@@ -178,6 +178,97 @@ Importance <- reactive({
 
 })
 
+Imp_ordered <- reactive({
+
+  validate(
+    need(try(Importance(), silent = TRUE),
+         "Wait for it!")
+  )
+
+  orderAtt <-  order(Importance()$Importance,
+                     decreasing = TRUE)
+
+  attLev_ordered <- defIN()$attLev[orderAtt]
+  nlev_ordered <- defIN()$nlev[orderAtt]
+
+  optOrder <- vector("list", length(nlev_ordered))
+  optOrder[[1]] <- seq_along(attLev_ordered[[1]])
+
+  optOrder[2:length(nlev_ordered)] <- lapply(2:length(nlev_ordered),
+                                             function(i) {
+
+                                               AttSel <- paste0("A",
+                                                                rep(orderAtt[i], nlev_ordered[i]),
+                                                                "_",
+                                                                sequence(nlev_ordered[i]))
+
+                                               DTdistHelp <- dataIN()$SKU_choice_DT[, lapply(.SD, sum),
+                                                                           by = get(paste0("Att", orderAtt[i - 1])),
+                                                                           .SDcols = AttSel]
+
+                                               DTdistHelp <- scale(DTdistHelp[, get := NULL])
+
+                                               # correct for attributes without variance (no chosen at all)
+                                               attributes(DTdistHelp)$`scaled:center` == 0
+                                               DTdistHelp[, which(attributes(DTdistHelp)$`scaled:center` == 0)] <- 0
+
+                                               increment_low <- seq(-1, 0, length = nlev_ordered[i - 1])
+                                               increment_high <- seq(0, 1, length = nlev_ordered[i - 1])
+
+                                               distHelp <- rbindlist(lapply(sequence(nlev_ordered[i - 1]),
+                                                                            function(j) {
+                                                                              data.frame(matrix(seq(increment_low[j], increment_high[j],
+                                                                                                    length = nlev_ordered[i]),
+                                                                                                nrow = 1))
+                                                                            }))
+
+                                               helpSample <- rbindlist(
+                                                 lapply(1:10000,
+                                                        function(x) {
+                                                          set.seed(x)
+                                                          data.table(
+                                                            matrix(sample(1:nlev_ordered[i],
+                                                                          size = nlev_ordered[i]), nrow = 1))
+                                                        })
+                                               )
+
+                                               helpSample[, i := .I]
+                                               helpSample[, criteria := mean(sapply(DTdistHelp[, unlist(.SD)] - distHelp,
+                                                                                    mean)),
+                                                          by = i, .SDcols = paste0("V", 1:nlev_ordered[i])]
+                                               helpSample[order(criteria)]
+
+                                               helpSample[, as.numeric(1:nlev_ordered[i]), with = FALSE]
+
+                                               orderInd <- unlist(helpSample[1, as.numeric(1:nlev_ordered[i]),
+                                                                             with = FALSE])
+
+                                               orderInd
+                                             })
+
+  optOrder
+
+  LevelCounts_100_ordered <- lapply(seq_along(optOrder),
+                                    function(x) {
+                                      out <- Importance()$LevelCounts_100[orderAtt][[x]][optOrder[[x]]]
+                                      names(out) <- attLev_ordered[[x]][optOrder[[x]]]
+                                      out
+                                    })
+
+  names(LevelCounts_100_ordered) <- names(attLev_ordered)
+
+  attLev_ordered <- lapply(seq_along(attLev_ordered),
+                           function(k) {
+                             attLev_ordered[[k]][optOrder[[k]]]
+                             })
+
+  list(Imp = Importance()$Importance[orderAtt],
+       LevCount = LevelCounts_100_ordered,
+       attLev_ordered = attLev_ordered)
+
+
+})
+
 # choice frequencies for combinations
 SKU_comb_freq <- reactive({
 

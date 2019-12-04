@@ -2,19 +2,23 @@
 
 combinations <- reactive({
 
-  combs <- dataIN()$SKU_choice_DT[, .(.N), by = .(Att1, Att2, Att3, Att4, Att5, Att6, Att7, Att8)][order(-N)]
-  combs[, Combination := paste0(Att1, Att2, Att3, Att4, Att5, Att6, Att7, Att8)]
+  VarSelect <- paste0("Att", seq_along(defIN()$nlev))
 
-  combs_labels <- data.table(Combination = combs[, Combination],
-                             sapply(1:length(defIN()$nlev),
-                                    function(x) {
-                                      sapply(unlist(combs[, x, with = FALSE]),
-                                             function(y) {
-                                               do.call(switch, c(y, as.list(defIN()$attLev[[x]])))
-                                             })
-                                    }),
-                             N = combs$N)
+  combs <- dataIN()$SKU_choice_DT[, .(.N), by = VarSelect][order(-N)]
+  combs[, Combination := do.call(paste0, .SD), .SDcols = VarSelect]
 
+  attFact <- defIN()$attLev
+  names(attFact) <- VarSelect
+
+  combs[, paste0("Fact", VarSelect) := .SD,
+        .SDcols = VarSelect]
+
+  for (j in seq_along(nlev)) {
+    set(combs, i = NULL, j = paste0("Fact", VarSelect)[j],
+        value = factor(combs[[j]], labels = attFact[[j]]))
+  }
+
+  combs_labels <- combs[, mget(c("Combination", paste0("Fact", VarSelect), "N"))]
   names(combs_labels) <- c("Combination", names(defIN()$attLev), "N")
 
   list(combs = combs,
@@ -40,40 +44,20 @@ output$portTable <- DT::renderDataTable({
                                                  c('5', '25', 'All'))))
 })
 
-# corDist <- reactive({
-#
-#   dummyChoice <- data.table::dcast(dataIN()$SKU_choice_DT[,.(ID, Comb)], ID ~ Comb)
-#
-#   helpCor <- data.table::data.table(dummyChoice[, "ID"],
-#                                     !is.na(dummyChoice[, -1, with = FALSE])) * 1
-#
-#   stats::cor(helpCor[, -1, with = FALSE])
-#
-# })
-
 output$substitution <- DT::renderDataTable({
 
   validate(
     need(!is.null(input$portTable_rows_selected), "Please select a combination in the table above.")
   )
 
-  # indexCor <- which(combinations()$combs_labels[input$portTable_rows_selected, Combination] == colnames(corDist()))
-  #
-  # sortDist <- sort(corDist()[, indexCor], decreasing = TRUE)
-  # sortDist <- sortDist[sortDist > 0]
-  #
-  # tableOut <- data.table::data.table(Combination = names(sortDist),
-  #                                    Distance = sortDist)
-
-  selectedComb <- as.numeric(combinations()$combs_labels[input$portTable_rows_selected, Combination])
+  selectedComb <- as.numeric(combinations()$combs_labels[input$portTable_rows_selected,
+                                                         Combination])
 
   IDselect <- SKU_comb_freq()[sapply(SKU_comb_freq()[, Comb],
                                      function(x) {
                                        selectedComb %in% x
-                                     }), ID]
-
-  IDselect
-  length(IDselect)
+                                     }
+                                     ), ID]
 
   substDT <- dataIN()$SKU_choice_DT[ID %in% IDselect, ]
 

@@ -1,14 +1,14 @@
 # set up output list; one datatable per attribute --> will be shown by renderUI in the next step
 observe({
 
-  lapply(seq_along(Importance()$LevelCounts_100),
+  lapply(seq_along(Imp_ordered()$LevCount),
          function(x) {
            id <- paste0("decMat", x)
 
            output[[id]] <- DT::renderDataTable({
-             dt <- data.table(matrix(Importance()$LevelCounts_100[[x]],
+             dt <- data.table(matrix(Imp_ordered()$LevCount[[x]],
                                      nrow = 1))
-             names(dt) <- defIN()$attLev[[x]]
+             names(dt) <- Imp_ordered()$attLev_ordered[[x]]
 
              DT::datatable(dt, selection = list(mode = 'single', target = 'column'),
                            filter = "none", autoHideNavigation = TRUE, rownames = FALSE,
@@ -37,14 +37,14 @@ observe({
 # table like output for counts
 output$decMatUI <- renderUI({
 
-  # lapply(seq_along(Importance()$LevelCounts_100),
-  lapply(order(Importance()$Importance, decreasing = TRUE),
+  # lapply(seq_along(Imp_ordered()$LevCount),
+  lapply(order(Imp_ordered()$Imp, decreasing = TRUE),
          function(x) {
            id <- paste0("decMat", x)
            div(style = "font-size: 10px; width:99%",
-               h6(toupper(names(Importance()$LevelCounts_100)[x]),
-                  " - ",
-                  round(Importance()$Importance[x], 3) * 100),
+               h6(div(style = "font-weight:bold; display:inline-block;", toupper(names(Imp_ordered()$LevCount)[x])),
+                  ": ",
+                  round(Imp_ordered()$Imp[x], 3) * 100),
                DT::dataTableOutput(id)
            )
          })
@@ -54,15 +54,15 @@ output$decMatUI <- renderUI({
 output$selComb <- renderUI({
 
   tags$table(style = "font-size:10px; width:100%;",
-             lapply(seq_along(Importance()$LevelCounts_100),
+             lapply(seq_along(Imp_ordered()$LevCount),
                     function(x) {
                       IDselected <- paste0("decMat", x, "_columns_selected")
                       tags$tr(
                         tags$td(style = "font-size:10px; padding-right:10px;",
-                                h6(toupper(names(Importance()$LevelCounts_100)[x]))
+                                h6(toupper(names(Imp_ordered()$LevCount)[x]))
                         ),
                         tags$td(style = "font-size:12px; padding-right:10px;",
-                                defIN()$attLev[[x]][input[[IDselected]] + 1])
+                                Imp_ordered()$attLev_ordered[[x]][input[[IDselected]] + 1])
                         )
                     }
              )
@@ -75,7 +75,7 @@ output$selComb <- renderUI({
 output$demandBox <- renderValueBox({
 
   validate(
-    need(all(sapply(seq_along(Importance()$LevelCounts_100),
+    need(all(sapply(seq_along(Imp_ordered()$LevCount),
                     function(x) {
                       IDselected <- paste0("decMat", x, "_columns_selected")
                       !is.null(input[[IDselected]])
@@ -83,10 +83,10 @@ output$demandBox <- renderValueBox({
          "")
   )
 
-  demand <- sum(sapply(seq_along(Importance()$LevelCounts_100),
+  demand <- sum(sapply(seq_along(Imp_ordered()$LevCount),
                    function(x) {
                      IDselected <- paste0("decMat", x, "_columns_selected")
-                     Importance()$LevelCounts_100[[x]][input[[IDselected]] + 1]
+                     Imp_ordered()$LevCount[[x]][input[[IDselected]] + 1]
                    }))
 
   valueBox(value = round(demand, 2),
@@ -100,7 +100,7 @@ output$demandBox <- renderValueBox({
 output$supplyBox <- renderValueBox({
 
   validate(
-    need(all(sapply(seq_along(Importance()$LevelCounts_100),
+    need(all(sapply(seq_along(Imp_ordered()$LevCount),
                     function(x) {
                       IDselected <- paste0("decMat", x, "_columns_selected")
                       !is.null(input[[IDselected]])
@@ -108,7 +108,7 @@ output$supplyBox <- renderValueBox({
          "Please select a combination across all attributes.")
   )
 
-  # supply <- sum(sapply(seq_along(Importance()$LevelCounts_100),
+  # supply <- sum(sapply(seq_along(Imp_ordered()$LevCount),
   #                      function(x) {
   #                        IDselected <- paste0("decMat", x, "_columns_selected")
   #                        Supply()$supply[[x]][input[[IDselected]] + 1]
@@ -125,7 +125,7 @@ output$supplyBox <- renderValueBox({
 output$incrementBox <- renderValueBox({
 
   validate(
-    need(all(sapply(seq_along(Importance()$LevelCounts_100),
+    need(all(sapply(seq_along(Imp_ordered()$LevCount),
                     function(x) {
                       IDselected <- paste0("decMat", x, "_columns_selected")
                       !is.null(input[[IDselected]])
@@ -133,11 +133,12 @@ output$incrementBox <- renderValueBox({
          "")
   )
 
-  increment <- sum(sapply(seq_along(Importance()$LevelCounts_100),
+  increment <- sum(sapply(seq_along(Imp_ordered()$LevCount),
                        function(x) {
                          IDselected <- paste0("decMat", x, "_columns_selected")
-                         Importance()$LevelCounts_100[[x]][input[[IDselected]] + 1]
-                       })) - 42.42
+                         Imp_ordered()$LevCount[[x]][input[[IDselected]] + 1]
+                       }
+                       )) - 42.42
 
   valueBox(value = round(increment, 2),
            subtitle = "Incrementality",
@@ -148,11 +149,6 @@ output$incrementBox <- renderValueBox({
 
 output$test2 <- renderPrint({
 
-  all(sapply(seq_along(Importance()$LevelCounts_100),
-         function(x) {
-           IDselected <- paste0("decMat", x, "_columns_selected")
-           !is.null(input[[IDselected]])
-         }))
-
+  Imp_ordered()
 
 })

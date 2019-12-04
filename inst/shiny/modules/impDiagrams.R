@@ -6,44 +6,67 @@ diagramData <- reactive({
   orderAtt <-  order(Importance()$Importance,
                      decreasing = TRUE)
 
-  DThelp <- data.table(sapply(seq_along(defIN()$attLev),
-                              function(x) {
-                                sapply(unlist(dataIN()$SKU_choice_DT[, paste0("Att", orderAtt[x]),
-                                                                     with = FALSE]),
-                                       function(y) {
-                                         paste0(sprintf("%02d", x), sprintf("%02d", y), "_",
-                                                defIN()$attLev[[orderAtt[x]]][y])
-                                       })
-                              }))
+  # DThelp <- data.table(sapply(seq_along(defIN()$attLev),
+  #                             function(x) {
+  #                               sapply(unlist(dataIN()$SKU_choice_DT[, paste0("Att", orderAtt[x]),
+  #                                                                    with = FALSE]),
+  #                                      function(y) {
+  #                                        paste0(sprintf("%02d", x), sprintf("%02d", y), "_",
+  #                                               defIN()$attLev[[orderAtt[x]]][y])
+  #                                      })
+  #                             }))
 
-  helpList <- lapply(1:(length(defIN()$nlev) - 1),
+  DThelp <- SKU_choice_DT[, grep("^Att", names(dataIN()$SKU_choice_DT))[orderAtt], with = FALSE]
+
+  # helpList <- lapply(1:(length(defIN()$nlev) - 1),
+  #                    function(x) {
+  #
+  #                      LoopDT <- DThelp[, c(x, x + 1), with = FALSE]
+  #                      names(LoopDT) <- c("L1", "L2")
+  #
+  #                      LoopDT[, c(total = .(.N)),
+  #                             by = .(Var1 = pmin(L1, L2),
+  #                                    Var2 = pmax(L1, L2))][order(Var1, Var2)]
+  #                    })
+
+  helpList <- lapply(1:(length(nlev) - 1),
                      function(x) {
 
                        LoopDT <- DThelp[, c(x, x + 1), with = FALSE]
                        names(LoopDT) <- c("L1", "L2")
 
+                       LoopDT[, T1 := L1 + x * 100]
+                       LoopDT[, T2 := L2 + (x + 1) * 100]
+
                        LoopDT[, c(total = .(.N)),
-                              by = .(Var1 = pmin(L1, L2),
-                                     Var2 = pmax(L1, L2))][order(Var1, Var2)]
+                              by = .(Var1 = pmin(T1, T2),
+                                     Var2 = pmax(T1, T2))][order(Var1, Var2)]
+
                      })
 
-  lookup <- data.table(Var1 = unlist(sapply(seq_along(defIN()$attLev),
-                                            function(x) {
-                                              sapply(seq_along(defIN()$attLev[[orderAtt[x]]]),
-                                                     function(y) {
-                                                       paste0(sprintf("%02d", x), sprintf("%02d", y), "_",
-                                                              defIN()$attLev[[orderAtt[x]]][y])
-                                                     })
-                                            })),
-                       Var2 = unlist(sapply(seq_along(defIN()$attLev),
-                                            function(x) {
-                                              sapply(seq_along(defIN()$attLev[[orderAtt[x]]]),
-                                                     function(y) {
-                                                       paste0(sprintf("%02d", x), sprintf("%02d", y), "_",
-                                                              defIN()$attLev[[orderAtt[x]]][y])
-                                                     })
-                                            })),
-                       code = sequence(sum(defIN()$nlev)) - 1)
+  # lookup <- data.table(Var1 = unlist(sapply(seq_along(defIN()$attLev),
+  #                                           function(x) {
+  #                                             sapply(seq_along(defIN()$attLev[[orderAtt[x]]]),
+  #                                                    function(y) {
+  #                                                      paste0(sprintf("%02d", x), sprintf("%02d", y), "_",
+  #                                                             defIN()$attLev[[orderAtt[x]]][y])
+  #                                                    })
+  #                                           })),
+  #                      Var2 = unlist(sapply(seq_along(defIN()$attLev),
+  #                                           function(x) {
+  #                                             sapply(seq_along(defIN()$attLev[[orderAtt[x]]]),
+  #                                                    function(y) {
+  #                                                      paste0(sprintf("%02d", x), sprintf("%02d", y), "_",
+  #                                                             defIN()$attLev[[orderAtt[x]]][y])
+  #                                                    })
+  #                                           })),
+  #                      code = sequence(sum(defIN()$nlev)) - 1)
+
+  lookup <- data.table(Var1 = rep(seq_along(defIN()$nlev[orderAtt]),
+                                  nlev[orderAtt]) * 100 + sequence(defIN()$nlev[orderAtt]),
+                       Var2 = rep(seq_along(defIN()$nlev[orderAtt]),
+                                  nlev[orderAtt]) * 100 + sequence(defIN()$nlev[orderAtt]),
+                       code = sequence(sum(defIN()$nlev[orderAtt])) - 1)
 
   helpLinks <- Reduce(rbind, helpList)
 
