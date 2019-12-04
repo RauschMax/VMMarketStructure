@@ -56,12 +56,12 @@ data <- eventReactive(input$go, {
 
   if (isolate(input$pw) == isolate(pw())) {
     get_data <- BeastRServer::azure_blob_call("GET",
-                                             storage_account = "shinyapp",
-                                             storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
-                                                                  "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
-                                                                  "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
-                                             container = paste0("ms", input$study),
-                                             blob = "data.csv")
+                                              storage_account = "shinyapp",
+                                              storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
+                                                                   "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
+                                                                   "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
+                                              container = paste0("ms", input$study),
+                                              blob = "data.csv")
 
     data <- as.data.table(httr::content(get_data, type = "text/csv", encoding = "UTF-8"))
 
@@ -83,12 +83,12 @@ comb <- eventReactive(input$go, {
 
   if (isolate(input$pw) == isolate(pw())) {
     get_comb <- BeastRServer::azure_blob_call("GET",
-                                             storage_account = "shinyapp",
-                                             storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
-                                                                  "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
-                                                                  "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
-                                             container = paste0("ms", input$study),
-                                             blob = "comb.csv")
+                                              storage_account = "shinyapp",
+                                              storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
+                                                                   "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
+                                                                   "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
+                                              container = paste0("ms", input$study),
+                                              blob = "comb.csv")
 
     comb <- as.data.table(httr::content(get_comb, type = "text/csv", encoding = "UTF-8"))
 
@@ -140,30 +140,28 @@ defIN <- reactive({
 
 # EXCTRACT DATA !-----------------------------------------------------------------------------------------------------
 
-# choice data
-dataIN <- reactive({
-
-  validate(
-    need(csv(), "Wait for it!")
-  )
-
-  SKU_choice_DT <- csv()
-
-  Data <- unique(SKU_choice_DT[, -(2:(length(defIN()$nlev) + 2)), with = FALSE])
-
-  list(SKU_choice_DT = SKU_choice_DT,
-       Data = Data)
-
-})
+# # choice data
+# dataIN <- reactive({
+#
+#   validate(
+#     need(comb(), "Wait for it!")
+#   )
+#
+#   SKU_choice_DT <- comb()
+#
+#   list(SKU_choice_DT = SKU_choice_DT,
+#        Data = Data)
+#
+# })
 
 # calculate importances and counts
 Importance <- reactive({
 
   # Attribute counts == attribute importance
 
-  Importance <- sapply(dataIN()$Data[, grep("^Rank",
-                                   names(dataIN()$Data)),
-                            with = FALSE],
+  Importance <- sapply(data()[, grep("^Rank",
+                                     names(data())),
+                              with = FALSE],
                        function(x) {
                          sum(x %in% 1:2, na.rm = TRUE)
                        })
@@ -173,10 +171,10 @@ Importance <- reactive({
   # Level counts - 100% within attributes
   LevelCounts_100 <- lapply(paste0("^A", 1:length(defIN()$nlev), "_"),
                             function(y) {
-                              out <- apply(dataIN()$Data[, grep(y, x = names(dataIN()$Data)),
-                                                             with = FALSE], 2, sum) /
-                                sum(apply(dataIN()$Data[, grep(y, x = names(dataIN()$Data)),
-                                                            with = FALSE], 2, sum))
+                              out <- apply(data()[, grep(y, x = names(data())),
+                                                  with = FALSE], 2, sum) /
+                                sum(apply(data()[, grep(y, x = names(data())),
+                                                 with = FALSE], 2, sum))
 
                               names(out) <- defIN()$attLev[[y]]
                               out
@@ -186,12 +184,12 @@ Importance <- reactive({
   # Level counts - summing to attribute importance within attributes
   LevelCounts_rel <- lapply(1:length(defIN()$nlev),
                             function(y) {
-                              out <- apply(dataIN()$Data[, grep(paste0("^A", y, "_"),
-                                                                    x = names(dataIN()$Data)),
-                                                             with = FALSE], 2, sum) /
-                                sum(apply(dataIN()$Data[, grep(paste0("^A", y, "_"),
-                                                                   x = names(dataIN()$Data)),
-                                                            with = FALSE], 2, sum)) * Importance[y]
+                              out <- apply(data()[, grep(paste0("^A", y, "_"),
+                                                         x = names(data())),
+                                                  with = FALSE], 2, sum) /
+                                sum(apply(data()[, grep(paste0("^A", y, "_"),
+                                                        x = names(data())),
+                                                 with = FALSE], 2, sum)) * Importance[y]
 
                               names(out) <- defIN()$attLev[[y]]
                               out
@@ -224,16 +222,20 @@ Imp_ordered <- reactive({
   optOrder[2:length(nlev_ordered)] <- lapply(2:length(nlev_ordered),
                                              function(i) {
 
-                                               AttSel <- paste0("A",
-                                                                rep(orderAtt[i], nlev_ordered[i]),
-                                                                "_",
-                                                                sequence(nlev_ordered[i]))
+                                               AttSel <- paste0("Att", orderAtt[i])
 
-                                               DTdistHelp <- dataIN()$SKU_choice_DT[, lapply(.SD, sum),
-                                                                           by = get(paste0("Att", orderAtt[i - 1])),
-                                                                           .SDcols = AttSel]
+                                               DTdistHelp1 <- comb()[, lapply(.SD, tabulate,
+                                                                              nbins = nlev_ordered[i]),
+                                                                     by = get(paste0("Att",
+                                                                                     orderAtt[i - 1])),
+                                                                     .SDcols = AttSel]
 
-                                               DTdistHelp <- scale(DTdistHelp[, get := NULL])
+                                               DTdistHelp1[, grp := rep(1:nlev_ordered[i],
+                                                                        nlev_ordered[i - 1])]
+
+                                               DTdistHelp <- scale(dcast(DTdistHelp1, get ~ grp,
+                                                                         value.var = AttSel,
+                                                                         fun = sum)[, get := NULL])
 
                                                # correct for attributes without variance (no chosen at all)
                                                attributes(DTdistHelp)$`scaled:center` == 0
@@ -287,7 +289,7 @@ Imp_ordered <- reactive({
   attLev_ordered <- lapply(seq_along(attLev_ordered),
                            function(k) {
                              attLev_ordered[[k]][optOrder[[k]]]
-                             })
+                           })
 
   list(Imp = Importance()$Importance[orderAtt],
        LevCount = LevelCounts_100_ordered,
@@ -303,8 +305,8 @@ SKU_comb_freq <- reactive({
   #      SKUs_per_person = SKU_choice_DT[, lapply(.SD, list), by = ID,
   #                                      .SDcols = "Comb"])
 
-  SKUs_per_person <- dataIN()$SKU_choice_DT[, lapply(.SD, list), by = ID,
-                                            .SDcols = "Comb"]
+  SKUs_per_person <- comb()[, lapply(.SD, list), by = ID,
+                            .SDcols = "Comb"]
 
   SKUs_per_person
 

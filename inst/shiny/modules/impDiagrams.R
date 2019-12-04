@@ -8,7 +8,7 @@ diagramData <- reactive({
 
   # DThelp <- data.table(sapply(seq_along(defIN()$attLev),
   #                             function(x) {
-  #                               sapply(unlist(dataIN()$SKU_choice_DT[, paste0("Att", orderAtt[x]),
+  #                               sapply(unlist(comb()[, paste0("Att", orderAtt[x]),
   #                                                                    with = FALSE]),
   #                                      function(y) {
   #                                        paste0(sprintf("%02d", x), sprintf("%02d", y), "_",
@@ -16,7 +16,7 @@ diagramData <- reactive({
   #                                      })
   #                             }))
 
-  DThelp <- SKU_choice_DT[, grep("^Att", names(dataIN()$SKU_choice_DT))[orderAtt], with = FALSE]
+  DThelp <- SKU_choice_DT[, grep("^Att", names(comb()))[orderAtt], with = FALSE]
 
   # helpList <- lapply(1:(length(defIN()$nlev) - 1),
   #                    function(x) {

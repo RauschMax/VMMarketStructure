@@ -4,7 +4,7 @@ combinations <- reactive({
 
   VarSelect <- paste0("Att", seq_along(defIN()$nlev))
 
-  combs <- dataIN()$SKU_choice_DT[, .(.N), by = VarSelect][order(-N)]
+  combs <- comb()[, .(.N), by = VarSelect][order(-N)]
   combs[, Combination := do.call(paste0, .SD), .SDcols = VarSelect]
 
   attFact <- defIN()$attLev
@@ -59,7 +59,7 @@ output$substitution <- DT::renderDataTable({
                                      }
                                      ), ID]
 
-  substDT <- dataIN()$SKU_choice_DT[ID %in% IDselect, ]
+  substDT <- comb()[ID %in% IDselect, ]
 
   tableOut <- substDT[, .(.N), by = .(Comb)][, Distance := N / max(N)][order(-N)][, .(Comb, Distance)]
 
