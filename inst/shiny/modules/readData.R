@@ -44,7 +44,7 @@ def <- eventReactive(input$go, {
 })
 
 # choices, combinations and ranks
-csv <- eventReactive(input$go, {
+data <- eventReactive(input$go, {
 
   validate(
     need(input$study, "Wait for it!")
@@ -55,17 +55,44 @@ csv <- eventReactive(input$go, {
   )
 
   if (isolate(input$pw) == isolate(pw())) {
-    get_csv <- BeastRServer::azure_blob_call("GET",
+    get_data <- BeastRServer::azure_blob_call("GET",
                                              storage_account = "shinyapp",
                                              storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
                                                                   "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
                                                                   "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
                                              container = paste0("ms", input$study),
-                                             blob = "Data.csv")
+                                             blob = "data.csv")
 
-    csvIN <- as.data.table(httr::content(get_csv, type = "text/csv", encoding = "UTF-8"))
+    data <- as.data.table(httr::content(get_data, type = "text/csv", encoding = "UTF-8"))
 
-    csvIN
+    data
+  }
+
+})
+
+# choices, combinations and ranks
+comb <- eventReactive(input$go, {
+
+  validate(
+    need(input$study, "Wait for it!")
+  )
+
+  validate(
+    need(pw(), "Wait for it!")
+  )
+
+  if (isolate(input$pw) == isolate(pw())) {
+    get_comb <- BeastRServer::azure_blob_call("GET",
+                                             storage_account = "shinyapp",
+                                             storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
+                                                                  "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
+                                                                  "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
+                                             container = paste0("ms", input$study),
+                                             blob = "comb.csv")
+
+    comb <- as.data.table(httr::content(get_comb, type = "text/csv", encoding = "UTF-8"))
+
+    comb
   }
 
 })
