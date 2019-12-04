@@ -33,28 +33,40 @@ get_def <- BeastRServer::azure_blob_call("GET",
                                                               "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
                                                               "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
                                          container = paste0("ms", input$study),
-                                         blob = "Attributes.def")
+                                         blob = "attributes.def")
 
 def <- strsplit(httr::content(get_def, as = "text", encoding = "UTF-8"), "\r\n")[[1]]
 def
 
 # choices, combinations and ranks
+#
+system.time({
+  get_data <- BeastRServer::azure_blob_call("GET",
+                                            storage_account = "shinyapp",
+                                            storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
+                                                                 "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
+                                                                 "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
+                                            container = paste0("ms", input$study),
+                                            blob = "data.csv")
+
+  data <- as.data.table(httr::content(get_data, type = "text/csv", encoding = "UTF-8"))
+})
+
+data
 
 system.time({
-  get_csv <- BeastRServer::azure_blob_call("GET",
-                                           storage_account = "shinyapp",
-                                           storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
-                                                                "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
-                                                                "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
-                                           container = paste0("ms", input$study),
-                                           blob = "Data.csv")
+  get_comb <- BeastRServer::azure_blob_call("GET",
+                                            storage_account = "shinyapp",
+                                            storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
+                                                                 "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
+                                                                 "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
+                                            container = paste0("ms", input$study),
+                                            blob = "comb.csv")
 
-  csvIN <- as.data.table(httr::content(get_csv, type = "text/csv", encoding = "UTF-8"))
+  comb <- as.data.table(httr::content(get_comb, type = "text/csv", encoding = "UTF-8"))
 })
-# User      System verstrichen
-# 21.06        3.72       62.47
 
-csvIN
+comb
 # DATA READ COMPLETED !-----------------------------------------------------------------------------------------------
 
 
@@ -85,9 +97,9 @@ nlev <- sapply(attLev, length)
 # EXCTRACT DATA !-----------------------------------------------------------------------------------------------------
 
 # choice data
-SKU_choice_DT <- csvIN
+SKU_choice_DT <- comb
 
-Data <- unique(SKU_choice_DT[, -(2:(length(nlev) + 2)), with = FALSE])
+Data <- data
 
 
 # calculate importances and counts
@@ -152,16 +164,20 @@ system.time({
   optOrder[2:length(nlev_ordered)] <- lapply(2:length(nlev_ordered),
                                              function(i) {
 
-                                               AttSel <- paste0("A",
-                                                                rep(orderAtt[i], nlev_ordered[i]),
-                                                                "_",
-                                                                sequence(nlev_ordered[i]))
+                                               AttSel <- paste0("Att", orderAtt[i])
 
-                                               DTdistHelp <- SKU_choice_DT[, lapply(.SD, sum),
-                                                                           by = get(paste0("Att", orderAtt[i - 1])),
-                                                                           .SDcols = AttSel]
+                                               DTdistHelp1 <- SKU_choice_DT[, lapply(.SD, tabulate,
+                                                                                     nbins = nlev_ordered[i]),
+                                                                            by = get(paste0("Att",
+                                                                                            orderAtt[i - 1])),
+                                                                            .SDcols = AttSel]
 
-                                               DTdistHelp <- scale(DTdistHelp[, get := NULL])
+                                               DTdistHelp1[, grp := rep(1:nlev_ordered[i],
+                                                                        nlev_ordered[i - 1])]
+
+                                               DTdistHelp <- scale(dcast(DTdistHelp1, get ~ grp,
+                                                                         value.var = AttSel,
+                                                                         fun = sum)[, get := NULL])
 
                                                # correct for attributes without variance (no chosen at all)
                                                attributes(DTdistHelp)$`scaled:center` == 0
@@ -431,7 +447,8 @@ lookup2 <- data.table(Var1 = rep(seq_along(nlev[orderAtt]), nlev[orderAtt]) * 10
 # 0.15        0.20        0.36
 
 system.time({
-  helpLinks2 <- Reduce(rbind, helpList2)
+  # helpLinks2 <- Reduce(rbind, helpList2)
+  helpLinks2 <- rbindlist(helpList2)
 })
 # User      System verstrichen
 # 0              0           0
@@ -552,8 +569,7 @@ combs_labels
 # # User       System verstrichen
 # # 17.22        0.56       17.91
 # names(combs_labels) <- c("Combination", names(attLev), "N")
-
-combs_labels
+# combs_labels
 
 
 

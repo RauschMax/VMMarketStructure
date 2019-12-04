@@ -36,7 +36,7 @@ def <- eventReactive(input$go, {
                                                                   "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
                                                                   "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
                                              container = paste0("ms", input$study),
-                                             blob = "Attributes.def")
+                                             blob = "attributes.def")
 
     strsplit(httr::content(get_def, as = "text", encoding = "UTF-8"), "\r\n")[[1]]
   }
