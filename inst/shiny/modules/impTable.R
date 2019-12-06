@@ -149,6 +149,6 @@ output$incrementBox <- renderValueBox({
 
 output$test2 <- renderPrint({
 
-  Imp_ordered()
+  orderIN()
 
 })

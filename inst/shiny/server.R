@@ -77,7 +77,7 @@ server <- function(input, output, session) {
 
   # output$portGRID <- DT::renderDataTable({
   #
-  #   combs <- comb()[, .(.N), by = .(Att1, Att2, Att3, Att4, Att5, Att6, Att7, Att8)][order(-N)]
+  #   combs <- SKU_choice_DT()[, .(.N), by = .(Att1, Att2, Att3, Att4, Att5, Att6, Att7, Att8)][order(-N)]
   #
   #   helpVec <- rep(NA, 100)
   #   helpVec[1:min(100, length(combs$N))] <- sort(combs$N, decreasing = TRUE)[1:min(100, length(combs$N))]
@@ -108,7 +108,7 @@ server <- function(input, output, session) {
   #
   # output$portGRID2 <- renderFormattable({
   #
-  #   combs <- comb()[, .(.N), by = .(Att1, Att2, Att3, Att4, Att5, Att6, Att7, Att8)][order(-N)]
+  #   combs <- SKU_choice_DT()[, .(.N), by = .(Att1, Att2, Att3, Att4, Att5, Att6, Att7, Att8)][order(-N)]
   #
   #   helpVec <- rep(NA, 100)
   #   helpVec[1:min(100, length(combs$N))] <- sort(combs$N, decreasing = TRUE)[1:min(100, length(combs$N))]

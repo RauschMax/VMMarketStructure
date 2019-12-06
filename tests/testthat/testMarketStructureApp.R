@@ -113,6 +113,41 @@ Importance <- Importance / sum(Importance)
 names(Importance) <- names(attLev)
 Importance
 
+# Alternative Importance calculation !----------------------------------------------------------------------------------
+
+Data_Weighted <- copy(Data)
+for (i in 1:length(nlev)) {
+  sel1 <- paste0("A", i, "_", seq_along(grep(paste0("A", i, "_"), names(Data_Weighted))))
+  sel2 <- paste0("RankAtt", i)
+  # print(sel1)
+  Data_Weighted[, (sel1) := lapply(.SD,
+                                   function(x) {
+                                     x * (length(nlev) -
+                                            ifelse(is.na(Data_Weighted[[sel2]]),
+                                                   0, Data_Weighted[[sel2]]) + 1)
+                                   }), .SDcols = sel1]
+}
+Data_Weighted
+
+DT_melted <- melt(Data_Weighted[, mget(c("ID", names(Data_Weighted)[grep("^A", names(Data_Weighted))]))],
+                  id.vars = "ID")
+
+
+DT_importance <- DT_melted[, sum(value), by = variable]
+# raw imp based on choices weighted by rank
+DT_importance <- DT_importance[, grp := rep(seq_along(nlev), nlev)][, sum(V1), by = grp]
+DT_importance[, imp := V1 / sum(V1)]
+# original Importance based on Top2 ranks
+DT_importance[, impOrig := Importance]
+# Imp corrected for number of levels
+DT_importance[, V2 := V1 / nlev]
+DT_importance[, imp2 := V2 / sum(V2)]
+DT_importance
+
+Importance_OLD <- Importance
+
+Importance <- DT_importance[, imp2]
+
 # Level counts - 100% within attributes
 LevelCounts_100 <- lapply(paste0("^A", 1:length(nlev), "_"),
                           function(y) {
@@ -157,162 +192,190 @@ orderAtt <-  order(Importance,
 attLev_ordered <- attLev[orderAtt]
 nlev_ordered <- nlev[orderAtt]
 
-optOrder <- vector("list", length(nlev_ordered))
-optOrder[[1]] <- seq_along(attLev_ordered[[1]])
+LevCountOrder <- LevelCounts_100[orderAtt]
+names(LevCountOrder[[1]]) <- attLev[orderAtt][[1]]
+
+optOrder2 <- vector("list", length(nlev_ordered))
+optOrder2[[1]] <- seq_along(attLev_ordered[[1]])
 
 system.time({
-  optOrder[2:length(nlev_ordered)] <- lapply(2:length(nlev_ordered),
-                                             function(i) {
+  for (i in 2:length(nlev_ordered)) {
 
-                                               AttSel <- paste0("Att", orderAtt[i])
+    AttSel0 <- paste0("Att", orderAtt[i - 1])
+    AttSel1 <- paste0("Att", orderAtt[i])
 
-                                               DTdistHelp1 <- SKU_choice_DT[, lapply(.SD, tabulate,
-                                                                                     nbins = nlev_ordered[i]),
-                                                                            by = get(paste0("Att",
-                                                                                            orderAtt[i - 1])),
-                                                                            .SDcols = AttSel]
+    DTdistHelp1 <- SKU_choice_DT[, lapply(.SD, tabulate,
+                                          nbins = nlev_ordered[i]),
+                                 by = get(AttSel0),
+                                 .SDcols = AttSel1]
 
-                                               DTdistHelp1[, grp := rep(1:nlev_ordered[i],
-                                                                        nlev_ordered[i - 1])]
+    DTdistHelp1[, grp := rep(1:nlev_ordered[i],
+                             nlev_ordered[i - 1])]
 
-                                               DTdistHelp <- scale(dcast(DTdistHelp1, get ~ grp,
-                                                                         value.var = AttSel,
-                                                                         fun = sum)[, get := NULL])
+    DTdistHelp <- scale(dcast(DTdistHelp1, get ~ grp,
+                              value.var = AttSel1,
+                              fun = sum)[, get := NULL])[optOrder2[[i - 1]], ]
 
-                                               # correct for attributes without variance (no chosen at all)
-                                               attributes(DTdistHelp)$`scaled:center` == 0
-                                               DTdistHelp[, which(attributes(DTdistHelp)$`scaled:center` == 0)] <- 0
 
-                                               increment_low <- seq(-1, 0, length = nlev_ordered[i - 1])
-                                               increment_high <- seq(0, 1, length = nlev_ordered[i - 1])
+    # correct for attributes without variance (no chosen at all)
+    attributes(DTdistHelp)$`scaled:center` == 0
+    DTdistHelp[, which(attributes(DTdistHelp)$`scaled:center` == 0)] <- 0
 
-                                               distHelp <- rbindlist(
-                                                 lapply(sequence(nlev_ordered[i - 1]),
-                                                        function(j) {
-                                                          data.frame(matrix(seq(increment_low[j],
-                                                                                increment_high[j],
-                                                                                length = nlev_ordered[i]),
-                                                                            nrow = 1))
-                                                        }))
+    increment_low <- seq(-1, 0, length = nlev_ordered[i - 1])
+    increment_high <- seq(0, 1, length = nlev_ordered[i - 1])
 
-                                               helpSample <- rbindlist(
-                                                 lapply(1:10000,
-                                                        function(x) {
-                                                          set.seed(x)
-                                                          data.table(
-                                                            matrix(sample(1:nlev_ordered[i],
-                                                                          size = nlev_ordered[i]), nrow = 1))
-                                                        })
-                                               )
+    distHelp <- rbindlist(
+      lapply(sequence(nlev_ordered[i - 1]),
+             function(j) {
+               data.frame(matrix(seq(increment_low[j],
+                                     increment_high[j],
+                                     length = nlev_ordered[i]),
+                                 nrow = 1))
+             }))
 
-                                               helpSample[, i := .I]
-                                               helpSample[, criteria := mean(sapply(DTdistHelp[, unlist(.SD)] - distHelp,
-                                                                                    mean)),
-                                                          by = i, .SDcols = paste0("V", 1:nlev_ordered[i])]
-                                               helpSample[order(criteria)]
+    helpSample <- rbindlist(
+      lapply(1:10000,
+             function(x) {
+               set.seed(x)
+               data.table(
+                 matrix(sample(1:nlev_ordered[i],
+                               size = nlev_ordered[i]), nrow = 1))
+             })
+    )
 
-                                               helpSample[, as.numeric(1:nlev_ordered[i]), with = FALSE]
+    helpSample[, i := .I]
+    helpSample[, criteria := mean(sapply(DTdistHelp[, unlist(.SD)] - distHelp,
+                                         mean)),
+               by = i, .SDcols = paste0("V", 1:nlev_ordered[i])]
+    helpSample <- helpSample[order(criteria)]
 
-                                               orderInd <- unlist(helpSample[1, as.numeric(1:nlev_ordered[i]),
-                                                                             with = FALSE])
+    orderInd <- unlist(helpSample[1, as.numeric(1:nlev_ordered[i]),
+                                  with = FALSE])
 
-                                               orderInd
-                                             })
+    optOrder2[[i]] <- orderInd
+
+    LevCountOrder[[i]] <- LevCountOrder[[i]][orderInd]
+    names(LevCountOrder[[i]]) <- attLev[orderAtt][[i]][orderInd]
+  }
 })
+# User      System verstrichen
+# 151.40        1.61      156.94
 
-optOrder
+pathOUT <- "J:/Proj/CAPR/AKT/316401010_Pilotstudie_MarketStructure"
+jsonlite::write_json(optOrder2, paste0(pathOUT, "/appData/order.json"))
 
-LevelCounts_100_ordered <- lapply(seq_along(optOrder),
-                                  function(x) {
-                                    out <- LevelCounts_100[orderAtt][[x]][optOrder[[x]]]
-                                    names(out) <- attLev[orderAtt][[x]][optOrder[[x]]]
-                                    out
-                                    # list(out,
-                                    #      names_out)
-                                  })
+optOrder2
 
-LevelCounts_100_ordered
+LevCountOrder
 
 
-i <- 2
-system.time({
-  lapply(i,
-         function(i) {
-
-           AttSel <- paste0("A",
-                            rep(orderAtt[i], nlev_ordered[i]),
-                            "_",
-                            sequence(nlev_ordered[i]))
-
-           DTdistHelp <- SKU_choice_DT[, lapply(.SD, sum),
-                                       by = get(paste0("Att", orderAtt[i - 1])),
-                                       .SDcols = AttSel]
-
-           DTdistHelp <- scale(DTdistHelp[, get := NULL])
-
-           # correct for attributes without variance (no chosen at all)
-           attributes(DTdistHelp)$`scaled:center` == 0
-           DTdistHelp[, which(attributes(DTdistHelp)$`scaled:center` == 0)] <- 0
-
-           increment_low <- seq(-1, 0, length = nlev_ordered[i - 1])
-           increment_high <- seq(0, 1, length = nlev_ordered[i - 1])
-
-           distHelp <- rbindlist(
-             lapply(sequence(nlev_ordered[i - 1]),
-                    function(j) {
-                      data.frame(matrix(seq(increment_low[j],
-                                            increment_high[j],
-                                            length = nlev_ordered[i]),
-                                        nrow = 1))
-                    }))
-
-           orderHelp <- lapply(1:10000,
-                               function(x) {
-                                 set.seed(x)
-                                 indHelp <- sample(1:nlev_ordered[i],
-                                                   size = nlev_ordered[i])
-
-                                 data.table(
-                                   mean(sapply(DTdistHelp[, indHelp] - distHelp,
-                                               mean)),
-                                   matrix(indHelp, nrow = 1))
-                               })
-
-           helpSample <- rbindlist(
-             lapply(1:10000,
-                    function(x) {
-                      set.seed(x)
-                      data.table(
-                        matrix(sample(1:nlev_ordered[i],
-                                      size = nlev_ordered[i]), nrow = 1))
-                    })
-           )
-
-           helpSample[, i := .I]
-           helpSample[, criteria := mean(sapply(DTdistHelp[, unlist(.SD)] - distHelp,
-                                                mean)),
-                      by = i, .SDcols = paste0("V", 1:nlev_ordered[i])]
-           helpSample[order(criteria)]
-
-
-
-           optOrder <- rbindlist(orderHelp)
-
-           optOrder[order(V1)]
-
-           orderInd <- unlist(optOrder[order(V1)][1, -1])
-
-           orderInd
-         })
-})
 
 
 # END Decision Matrix Table !-------------------------------------------------------------------------------------------
 
 
+# Alternative SKU_choice_DT !-------------------------------------------------------------------------------------------
+# NA --> 0 instead of expand.grid(x)
+SKU_choice_2 <- lapply(Data$ID,
+                       function(x) {
+                         dataHelp <- Data[Data$ID == x, grep("^A", names(Data)), with = FALSE]
+
+                         chosenLevels <- lapply(1:length(nlev),
+                                                function(y) {
+                                                  outHelp <- which(dataHelp[, grep(paste0("^A", y, "_"),
+                                                                                   names(dataHelp)), with = FALSE] == 1)
+                                                  if (length(outHelp) == 0) {
+                                                    0
+                                                  } else {
+                                                    outHelp
+                                                  }
+                                                })
+
+                         out <- data.frame(ID = x, expand.grid(chosenLevels))
+                         names(out) <- c("ID", paste0("Att", 1:length(nlev)))
+
+                         out$Comb <- gsub("NA", "_", apply(out[, -1], 1, paste0, collapse = ""))
+
+                         out
+
+                       })
+
+# str(SKU_choice)
+SKU_choice_2[[1]]
+unique(SKU_choice_2[[1]])
+Data[1, ]
+
+system.time({
+  # SKU_choice_DT <- data.table(Reduce(rbind, SKU_choice))
+  SKU_choice_DT_ALTERNATIVE <- rbindlist(SKU_choice_2)
+})
+SKU_choice_DT[order(ID)]
+SKU_choice_DT_ALTERNATIVE[order(ID)]
+
+SKU_choice_DT[, .N, by = ID]
+SKU_choice_DT_ALTERNATIVE[, .N, by = ID]
+table(SKU_choice_DT[, .N, by = ID]$N)
+table(SKU_choice_DT_ALTERNATIVE[, .N, by = ID]$N)
+
+# SANKEY DIAGRAMM - ALTERNATIVE CODING !--------------------------------------------------------------------------------
+
+system.time({
+  DThelp2 <- SKU_choice_DT_ALTERNATIVE[, grep("^Att", names(SKU_choice_DT_ALTERNATIVE))[orderAtt], with = FALSE]
+})
+# User      System verstrichen
+# 0              0           0
+
+system.time({
+  helpList2 <- lapply(1:(length(nlev) - 1),
+                      function(x) {
+
+                        LoopDT <- DThelp2[, c(x, x + 1), with = FALSE]
+                        names(LoopDT) <- c("L1", "L2")
+
+                        LoopDT[, T1 := L1 + x * 100]
+                        LoopDT[, T2 := L2 + (x + 1) * 100]
+
+                        LoopDT[, c(total = .(.N)),
+                               by = .(Var1 = pmin(T1, T2),
+                                      Var2 = pmax(T1, T2))][order(Var1, Var2)]
+
+                      })
+})
+# User      System verstrichen
+# 0.04        0.00        0.03
+
+lookup2 <- data.table(Var1 = rep(seq_along(nlev[orderAtt]), nlev[orderAtt]) * 100 + sequence(nlev[orderAtt]),
+                      Var2 = rep(seq_along(nlev[orderAtt]), nlev[orderAtt]) * 100 + sequence(nlev[orderAtt]),
+                      code = sequence(sum(nlev[orderAtt])) - 1)
+
+system.time({
+  helpLinks2 <- rbindlist(helpList2)
+})
+# User      System verstrichen
+# 0              0           0
+
+helpLinks2 <- helpLinks2[lookup2[, .(Var1, code)], on = "Var1", nomatch = 0]
+helpLinks2 <- helpLinks2[lookup2[, .(Var2, code)], on = "Var2", nomatch = 0]
+
+sankeyLinks2 <- helpLinks2[, .(code, i.code, total)][order(code, i.code)]
+names(sankeyLinks2) <- c("source", "target", "value")
+
+sankeyNodes2 <- data.frame(name = unlist(attLev[orderAtt]))
+
+sankeyNetwork(Links = sankeyLinks2,
+              Nodes = sankeyNodes2,
+              Source = "source",
+              Target = "target",
+              Value = "value",
+              NodeID = "name",
+              fontSize = 12,
+              nodeWidth = 15)
+# !!! END !!! SANKEY DIAGRAMM - ALTERNATIVE CODING !--------------------------------------------------------------------
+
+
 # SANKEY DIAGRAMM !-----------------------------------------------------------------------------------------------------
-orderAtt <-  order(Importance,
-                   decreasing = TRUE)
+# orderAtt <-  order(Importance,
+#                    decreasing = TRUE)
 
 # system.time({
 #   DThelp1 <- data.table(sapply(seq_along(attLev),
@@ -602,3 +665,67 @@ substDT[, .(.N), by = .(Comb)][, Substitution := N / max(N)][order(-N)]
 #                                   !is.na(dummyChoice[, -1, with = FALSE])) * 1
 #
 # stats::cor(helpCor[, -1, with = FALSE])
+
+# Clustering Tests !----------------------------------------------------------------------------------------------------
+
+SKUs_per_person
+
+SKUs_per_person[2, Comb][[1]] %in% SKUs_per_person[1, Comb][[1]]
+
+testDist <- lapply(1:nrow(SKUs_per_person),
+                   function(y) {
+                     data.table(t(sapply(SKUs_per_person[, Comb],
+                                         function(x) {
+                                           helpIncl <- x %in% SKUs_per_person[y, Comb][[1]]
+
+                                           out <- sum(helpIncl) / max(length(x[[1]]),
+                                                                      length(SKUs_per_person[y, Comb][[1]]))
+
+                                           out
+                                         })))
+                   })
+
+
+lapply(1:25,
+       function(y) {
+         data.table(t(sapply(SKUs_per_person[1:25, Comb],
+                function(x) {
+                  helpIncl <- x %in% SKUs_per_person[y, Comb][[1]]
+
+                  out <- sum(helpIncl) / max(length(x[[1]]), length(SKUs_per_person[y, Comb][[1]]))
+
+                  out
+                })))
+       })
+
+testDist_DT <- rbindlist(testDist)
+testDist_DT[, 1:10]
+
+testDist_DT[V1 > 0, 1]
+which(testDist_DT[, 1] > 0)
+
+SKUs_per_person[which(testDist_DT[, 1] > 0)]
+SKUs_per_person[which(testDist_DT[, 1] == 1)]
+
+SKUs_per_person[1, Comb]
+SKUs_per_person[1, Comb][[1]]
+SKUs_per_person[25, Comb]
+
+SKUs_per_person[1, Comb][[1]] %in% SKUs_per_person[25, Comb][[1]]
+
+summary(testDist_DT[, 1])
+
+SKUs_per_person[]
+SKUs_per_person[, Lag1 := shift(Comb, 1, NA, "lag")]
+SKUs_per_person[, Lag1 := c(NA, Comb[-.N])]
+SKUs_per_person[, test := lapply(Comb, function(x) {x %in% Lag1})]
+SKUs_per_person
+
+
+testClust <- hclust(as.dist(testDist_DT))
+plot(testClust,  labels = FALSE, hang = -1, main = "Original Tree")
+table(cutree(testClust, k = 10))
+
+Data
+
+

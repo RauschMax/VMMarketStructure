@@ -17,6 +17,7 @@ pw <- eventReactive(input$go, {
 
   pw <- httr::content(get_pw, as = "text", encoding = "UTF-8")
 
+  print("PW read")
   pw
 
 })
@@ -38,6 +39,7 @@ def <- eventReactive(input$go, {
                                              container = paste0("ms", input$study),
                                              blob = "attributes.def")
 
+    print("def read")
     strsplit(httr::content(get_def, as = "text", encoding = "UTF-8"), "\r\n")[[1]]
   }
 
@@ -65,13 +67,45 @@ data <- eventReactive(input$go, {
 
     data <- as.data.table(httr::content(get_data, type = "text/csv", encoding = "UTF-8"))
 
+    print("data read")
     data
   }
 
 })
 
+# # choices, combinations and ranks
+# comb <- eventReactive(input$go, {
+#
+#   validate(
+#     need(input$study, "Wait for it!")
+#   )
+#
+#   # validate(
+#   #   need(pw(), "Wait for it!")
+#   # )
+#   #
+#   # if (isolate(input$pw) == isolate(pw())) {
+#   #   get_comb <- BeastRServer::azure_blob_call("GET",
+#   #                                             storage_account = "shinyapp",
+#   #                                             storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
+#   #                                                                  "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
+#   #                                                                  "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
+#   #                                             container = paste0("ms", input$study),
+#   #                                             blob = "comb.csv")
+#   #
+#   #   comb <- as.data.table(httr::content(get_comb, type = "text/csv", encoding = "UTF-8"))
+#   #
+#   #   print("combs read")
+#   #   comb
+#   # }
+#
+#   print("combs read")
+#
+#
+# })
+
 # choices, combinations and ranks
-comb <- eventReactive(input$go, {
+orderIN <- eventReactive(input$go, {
 
   validate(
     need(input$study, "Wait for it!")
@@ -82,17 +116,18 @@ comb <- eventReactive(input$go, {
   )
 
   if (isolate(input$pw) == isolate(pw())) {
-    get_comb <- BeastRServer::azure_blob_call("GET",
+    get_order <- BeastRServer::azure_blob_call("GET",
                                               storage_account = "shinyapp",
                                               storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
                                                                    "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
                                                                    "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
                                               container = paste0("ms", input$study),
-                                              blob = "comb.csv")
+                                              blob = "order.json")
 
-    comb <- as.data.table(httr::content(get_comb, type = "text/csv", encoding = "UTF-8"))
+    orderIN <- httr::content(get_order, type = "application/json", encoding = "UTF-8")
 
-    comb
+    print("orderIN read")
+    lapply(orderIN, unlist)
   }
 
 })
@@ -157,15 +192,42 @@ defIN <- reactive({
 # calculate importances and counts
 Importance <- reactive({
 
+  validate(
+    need(data(), "Wait for data!")
+  )
+
+  # Alternative Importance calculation !----------------------------------------------------------------------------------
+
+  Data_Weighted <- copy(data())
+  for (i in 1:length(defIN()$nlev)) {
+    sel1 <- paste0("A", i, "_", seq_along(grep(paste0("A", i, "_"),
+                                               names(Data_Weighted))))
+    sel2 <- paste0("RankAtt", i)
+    # print(sel1)
+    Data_Weighted[, (sel1) := lapply(.SD,
+                                     function(x) {
+                                       x * (length(defIN()$nlev) -
+                                              ifelse(is.na(Data_Weighted[[sel2]]),
+                                                     0, Data_Weighted[[sel2]]) + 1)
+                                     }), .SDcols = sel1]
+  }
+
+  DT_melted <- melt(Data_Weighted[, mget(c("ID", names(Data_Weighted)[grep("^A", names(Data_Weighted))]))],
+                    id.vars = "ID")
+
+  DT_importance <- DT_melted[, sum(value), by = variable]
+  # raw imp based on choices weighted by rank
+  DT_importance <- DT_importance[, grp := rep(seq_along(defIN()$nlev),
+                                              defIN()$nlev)][, sum(V1),
+                                                             by = grp]
+  DT_importance[, imp := V1 / sum(V1)]
+  # Imp corrected for number of levels
+  DT_importance[, V2 := V1 / defIN()$nlev]
+  DT_importance[, imp2 := V2 / sum(V2)]
+
   # Attribute counts == attribute importance
 
-  Importance <- sapply(data()[, grep("^Rank",
-                                     names(data())),
-                              with = FALSE],
-                       function(x) {
-                         sum(x %in% 1:2, na.rm = TRUE)
-                       })
-  Importance <- Importance / sum(Importance)
+  Importance <- DT_importance[, imp2]
   names(Importance) <- names(defIN()$attLev)
 
   # Level counts - 100% within attributes
@@ -207,7 +269,7 @@ Imp_ordered <- reactive({
 
   validate(
     need(try(Importance(), silent = TRUE),
-         "Wait for it!")
+         "Wait for Imps!")
   )
 
   orderAtt <-  order(Importance()$Importance,
@@ -216,66 +278,7 @@ Imp_ordered <- reactive({
   attLev_ordered <- defIN()$attLev[orderAtt]
   nlev_ordered <- defIN()$nlev[orderAtt]
 
-  optOrder <- vector("list", length(nlev_ordered))
-  optOrder[[1]] <- seq_along(attLev_ordered[[1]])
-
-  optOrder[2:length(nlev_ordered)] <- lapply(2:length(nlev_ordered),
-                                             function(i) {
-
-                                               AttSel <- paste0("Att", orderAtt[i])
-
-                                               DTdistHelp1 <- comb()[, lapply(.SD, tabulate,
-                                                                              nbins = nlev_ordered[i]),
-                                                                     by = get(paste0("Att",
-                                                                                     orderAtt[i - 1])),
-                                                                     .SDcols = AttSel]
-
-                                               DTdistHelp1[, grp := rep(1:nlev_ordered[i],
-                                                                        nlev_ordered[i - 1])]
-
-                                               DTdistHelp <- scale(dcast(DTdistHelp1, get ~ grp,
-                                                                         value.var = AttSel,
-                                                                         fun = sum)[, get := NULL])
-
-                                               # correct for attributes without variance (no chosen at all)
-                                               attributes(DTdistHelp)$`scaled:center` == 0
-                                               DTdistHelp[, which(attributes(DTdistHelp)$`scaled:center` == 0)] <- 0
-
-                                               increment_low <- seq(-1, 0, length = nlev_ordered[i - 1])
-                                               increment_high <- seq(0, 1, length = nlev_ordered[i - 1])
-
-                                               distHelp <- rbindlist(lapply(sequence(nlev_ordered[i - 1]),
-                                                                            function(j) {
-                                                                              data.frame(matrix(seq(increment_low[j], increment_high[j],
-                                                                                                    length = nlev_ordered[i]),
-                                                                                                nrow = 1))
-                                                                            }))
-
-                                               helpSample <- rbindlist(
-                                                 lapply(1:10000,
-                                                        function(x) {
-                                                          set.seed(x)
-                                                          data.table(
-                                                            matrix(sample(1:nlev_ordered[i],
-                                                                          size = nlev_ordered[i]), nrow = 1))
-                                                        })
-                                               )
-
-                                               helpSample[, i := .I]
-                                               helpSample[, criteria := mean(sapply(DTdistHelp[, unlist(.SD)] - distHelp,
-                                                                                    mean)),
-                                                          by = i, .SDcols = paste0("V", 1:nlev_ordered[i])]
-                                               helpSample[order(criteria)]
-
-                                               helpSample[, as.numeric(1:nlev_ordered[i]), with = FALSE]
-
-                                               orderInd <- unlist(helpSample[1, as.numeric(1:nlev_ordered[i]),
-                                                                             with = FALSE])
-
-                                               orderInd
-                                             })
-
-  optOrder
+  optOrder <- orderIN()
 
   LevelCounts_100_ordered <- lapply(seq_along(optOrder),
                                     function(x) {
@@ -298,17 +301,54 @@ Imp_ordered <- reactive({
 
 })
 
-# choice frequencies for combinations
-SKU_comb_freq <- reactive({
+SKU_choice_DT <- reactive({
+  # Alternative SKU_choice_DT !-------------------------------------------------------------------------------------------
+  # NA --> 0 instead of expand.grid(x)
+  SKU_choice_2 <- lapply(data()$ID,
+                         function(x) {
+                           dataHelp <- data()[data()$ID == x, grep("^A", names(data())), with = FALSE]
 
-  # list(SKU_choice_freq = SKU_choice_DT[, .(.N), by = .(Comb)][order(-N)],
-  #      SKUs_per_person = SKU_choice_DT[, lapply(.SD, list), by = ID,
-  #                                      .SDcols = "Comb"])
+                           chosenLevels <- lapply(1:length(defIN()$nlev),
+                                                  function(y) {
+                                                    outHelp <- which(dataHelp[, grep(paste0("^A", y, "_"),
+                                                                                     names(dataHelp)),
+                                                                              with = FALSE] == 1)
+                                                    if (length(outHelp) == 0) {
+                                                      0
+                                                    } else {
+                                                      outHelp
+                                                    }
+                                                  })
 
-  SKUs_per_person <- comb()[, lapply(.SD, list), by = ID,
-                            .SDcols = "Comb"]
+                           out <- data.frame(ID = x, expand.grid(chosenLevels))
+                           names(out) <- c("ID", paste0("Att", 1:length(defIN()$nlev)))
 
-  SKUs_per_person
+                           out$Comb <- gsub("NA", "_", apply(out[, -1], 1,
+                                                             paste0,
+                                                             collapse = ""))
+
+                           out
+
+                         })
+
+
+  SKU_choice_DT_ALTERNATIVE <- rbindlist(SKU_choice_2)
+
+  SKU_choice_DT_ALTERNATIVE[order(ID)]
 
 })
+
+# # choice frequencies for combinations
+# SKU_comb_freq <- reactive({
+#
+#   # list(SKU_choice_freq = SKU_choice_DT[, .(.N), by = .(Comb)][order(-N)],
+#   #      SKUs_per_person = SKU_choice_DT[, lapply(.SD, list), by = ID,
+#   #                                      .SDcols = "Comb"])
+#
+#   SKUs_per_person <- SKU_choice_DT()[, lapply(.SD, list), by = ID,
+#                                      .SDcols = "Comb"]
+#
+#   SKUs_per_person
+#
+# })
 # DATA extracted !------------------------------------------------------------------------------------------------------

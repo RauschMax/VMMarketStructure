@@ -4,22 +4,31 @@ combinations <- reactive({
 
   VarSelect <- paste0("Att", seq_along(defIN()$nlev))
 
-  combs <- comb()[, .(.N), by = VarSelect][order(-N)]
+  combs <- SKU_choice_DT()[, .(.N), by = VarSelect][order(-N)]
   combs[, Combination := do.call(paste0, .SD), .SDcols = VarSelect]
 
-  attFact <- defIN()$attLev
+  attFact <- lapply(defIN()$attLev,
+                    function(x) {
+                      c("All Levels", x)
+                      })
   names(attFact) <- VarSelect
 
   combs[, paste0("Fact", VarSelect) := .SD,
         .SDcols = VarSelect]
 
-  for (j in seq_along(nlev)) {
+  for (j in seq_along(defIN()$nlev)) {
     set(combs, i = NULL, j = paste0("Fact", VarSelect)[j],
-        value = factor(combs[[j]], labels = attFact[[j]]))
+        value = factor(combs[[j]],
+                       levels = seq_along(attFact[[j]]) - 1,
+                       labels = attFact[[j]]))
   }
 
-  combs_labels <- combs[, mget(c("Combination", paste0("Fact", VarSelect), "N"))]
-  names(combs_labels) <- c("Combination", names(defIN()$attLev), "N")
+  combs_labels <- combs[, mget(c("Combination",
+                                 paste0("Fact", VarSelect), "N"))]
+
+  names(combs_labels) <- c("Combination",
+                           names(defIN()$attLev),
+                           "N")
 
   list(combs = combs,
        combs_labels = combs_labels)
@@ -59,7 +68,7 @@ output$substitution <- DT::renderDataTable({
                                      }
                                      ), ID]
 
-  substDT <- comb()[ID %in% IDselect, ]
+  substDT <- SKU_choice_DT()[ID %in% IDselect, ]
 
   tableOut <- substDT[, .(.N), by = .(Comb)][, Distance := N / max(N)][order(-N)][, .(Comb, Distance)]
 

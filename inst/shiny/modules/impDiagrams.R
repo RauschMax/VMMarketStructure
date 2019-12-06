@@ -8,7 +8,7 @@ diagramData <- reactive({
 
   # DThelp <- data.table(sapply(seq_along(defIN()$attLev),
   #                             function(x) {
-  #                               sapply(unlist(comb()[, paste0("Att", orderAtt[x]),
+  #                               sapply(unlist(SKU_choice_DT()[, paste0("Att", orderAtt[x]),
   #                                                                    with = FALSE]),
   #                                      function(y) {
   #                                        paste0(sprintf("%02d", x), sprintf("%02d", y), "_",
@@ -16,7 +16,7 @@ diagramData <- reactive({
   #                                      })
   #                             }))
 
-  DThelp <- SKU_choice_DT[, grep("^Att", names(comb()))[orderAtt], with = FALSE]
+  DThelp <- SKU_choice_DT()[, grep("^Att", names(SKU_choice_DT()))[orderAtt], with = FALSE]
 
   # helpList <- lapply(1:(length(defIN()$nlev) - 1),
   #                    function(x) {
@@ -29,7 +29,7 @@ diagramData <- reactive({
   #                                    Var2 = pmax(L1, L2))][order(Var1, Var2)]
   #                    })
 
-  helpList <- lapply(1:(length(nlev) - 1),
+  helpList <- lapply(1:(length(defIN()$nlev) - 1),
                      function(x) {
 
                        LoopDT <- DThelp[, c(x, x + 1), with = FALSE]
@@ -63,9 +63,9 @@ diagramData <- reactive({
   #                      code = sequence(sum(defIN()$nlev)) - 1)
 
   lookup <- data.table(Var1 = rep(seq_along(defIN()$nlev[orderAtt]),
-                                  nlev[orderAtt]) * 100 + sequence(defIN()$nlev[orderAtt]),
+                                  defIN()$nlev[orderAtt]) * 100 + sequence(defIN()$nlev[orderAtt]),
                        Var2 = rep(seq_along(defIN()$nlev[orderAtt]),
-                                  nlev[orderAtt]) * 100 + sequence(defIN()$nlev[orderAtt]),
+                                  defIN()$nlev[orderAtt]) * 100 + sequence(defIN()$nlev[orderAtt]),
                        code = sequence(sum(defIN()$nlev[orderAtt])) - 1)
 
   helpLinks <- Reduce(rbind, helpList)

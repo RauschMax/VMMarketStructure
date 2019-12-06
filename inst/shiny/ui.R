@@ -125,7 +125,9 @@ ui <- kantarPage(
         valueBoxOutput("supplyBox", width = 4),
         valueBoxOutput("incrementBox", width = 4),
         kantarBox(
-          verbatimTextOutput("test2"),
+          div(style = "overflow-y:scroll; overflow-x:scroll;
+                       height:42vh; width:100%; font-size:80%",
+              verbatimTextOutput("test2")),
           width = 4)
       ),
 
