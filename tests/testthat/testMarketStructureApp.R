@@ -8,6 +8,7 @@ library(DT)
 library(formattable)
 library(networkD3)
 library(treemap)
+library(GA)
 
 # READ DATA !---------------------------------------------------------------------------------------------------------
 input <- list(study = "316401010")
@@ -54,19 +55,19 @@ system.time({
 
 data
 
-system.time({
-  get_comb <- BeastRServer::azure_blob_call("GET",
-                                            storage_account = "shinyapp",
-                                            storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
-                                                                 "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
-                                                                 "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
-                                            container = paste0("ms", input$study),
-                                            blob = "comb.csv")
-
-  comb <- as.data.table(httr::content(get_comb, type = "text/csv", encoding = "UTF-8"))
-})
-
-comb
+# system.time({
+#   get_comb <- BeastRServer::azure_blob_call("GET",
+#                                             storage_account = "shinyapp",
+#                                             storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
+#                                                                  "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
+#                                                                  "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
+#                                             container = paste0("ms", input$study),
+#                                             blob = "comb.csv")
+#
+#   comb <- as.data.table(httr::content(get_comb, type = "text/csv", encoding = "UTF-8"))
+# })
+#
+# comb
 # DATA READ COMPLETED !-----------------------------------------------------------------------------------------------
 
 
@@ -96,22 +97,71 @@ nlev <- sapply(attLev, length)
 
 # EXCTRACT DATA !-----------------------------------------------------------------------------------------------------
 
+table(rowSums(!is.na(data[, grep("^R", names(data)), with = FALSE])))
+
+Data <- data[rowSums(!is.na(data[, grep("^R", names(data)), with = FALSE])) > 4]
+
 # choice data
-SKU_choice_DT <- comb
+# SKU_choice_DT_1 <- comb
 
-Data <- data
+# Alternative SKU_choice_DT !-------------------------------------------------------------------------------------------
+# NA --> 0 instead of expand.grid(x)
 
+
+SKU_choice <- lapply(Data$ID,
+                     function(x) {
+                       dataHelp <- Data[Data$ID == x, grep("^A", names(Data)), with = FALSE]
+
+                       chosenLevels <- lapply(1:length(nlev),
+                                              function(y) {
+                                                outHelp <- which(dataHelp[, grep(paste0("^A", y, "_"),
+                                                                                 names(dataHelp)), with = FALSE] != 0)
+                                                if (length(outHelp) == 0) {
+                                                  0
+                                                } else {
+                                                  outHelp
+                                                }
+                                              })
+
+                       out <- data.table(ID = x, expand.grid(chosenLevels))
+                       names(out) <- c("ID", paste0("Att", 1:length(nlev)))
+
+                       out[, paste0("T", 1:length(nlev)) := lapply(.SD, sprintf, fmt = "%02d"),
+                           .SDcols = names(out)[-1]]
+
+                       out[, Comb := do.call(paste0, .SD), .SDcols = paste0("T", 1:length(nlev))]
+
+                       out[, mget(c("ID", paste0("Att", 1:length(nlev)), "Comb"))]
+
+                     })
+
+# str(SKU_choice)
+SKU_choice[[1]]
+unique(SKU_choice[[1]])
+Data[1, ]
+
+system.time({
+  # SKU_choice_DT <- data.table(Reduce(rbind, SKU_choice))
+  SKU_choice_DT <- rbindlist(SKU_choice)
+})
+# SKU_choice_DT_1[order(ID)]
+SKU_choice_DT[order(ID)]
+
+# SKU_choice_DT_1[, .N, by = ID]
+# SKU_choice_DT[, .N, by = ID]
+# table(SKU_choice_DT_1[, .N, by = ID]$N)
+# table(SKU_choice_DT[, .N, by = ID]$N)
 
 # calculate importances and counts
-Importance <- sapply(Data[, grep("^Rank",
+Importance_Top2 <- sapply(Data[, grep("^Rank",
                                         names(Data)),
                                  with = FALSE],
                             function(x) {
                               sum(x %in% 1:2, na.rm = TRUE)
                             })
-Importance <- Importance / sum(Importance)
-names(Importance) <- names(attLev)
-Importance
+Importance_Top2 <- Importance_Top2 / sum(Importance_Top2)
+names(Importance_Top2) <- names(attLev)
+Importance_Top2
 
 # Alternative Importance calculation !----------------------------------------------------------------------------------
 
@@ -138,23 +188,56 @@ DT_importance <- DT_melted[, sum(value), by = variable]
 DT_importance <- DT_importance[, grp := rep(seq_along(nlev), nlev)][, sum(V1), by = grp]
 DT_importance[, imp := V1 / sum(V1)]
 # original Importance based on Top2 ranks
-DT_importance[, impOrig := Importance]
+DT_importance[, impOrig := Importance_Top2]
 # Imp corrected for number of levels
 DT_importance[, V2 := V1 / nlev]
 DT_importance[, imp2 := V2 / sum(V2)]
 DT_importance
 
-Importance_OLD <- Importance
+Data_inverseRanks <- Data[, mget(c("ID", names(Data)[grep("^R", names(Data))]))]
+
+Data_inverseRanks[, names(Data)[grep("^R", names(Data))] :=
+                    lapply(.SD,
+                           function(x) {
+                             out <- (length(nlev) + 1) - x
+                             sapply(out,
+                                    function(y) {
+                                      ifelse(is.na(y), 0, y)
+                                    })
+                           }), .SDcols = names(Data)[grep("^R", names(Data))]]
+
+Data_inverseRanks
+
+Importance_invRanks <- sapply(Data_inverseRanks[, mget(names(Data_inverseRanks)[grep("^R", names(Data_inverseRanks))])],
+                              mean)
+Importance_invRanks / sum(Importance_invRanks)
+
+
+DT_importance[, imp3 := Importance_invRanks / sum(Importance_invRanks)]
+DT_importance
+
+Importance_Compare <- DT_importance[, .(impOrig, imp2, imp3)]
+Importance_Compare[, paste0("orderImp", 1:3) := lapply(-.SD, rank),
+                   .SDcols = c("impOrig", "imp2", "imp3")]
+Importance_Compare[, attNames := names(attLev)]
+Importance_Compare
+
+fwrite(Importance_Compare, file = "Importance_Compare_Options.csv",
+       sep = ";", dec = ",")
 
 Importance <- DT_importance[, imp2]
+names(Importance) <- names(attLev)
+Importance
 
 # Level counts - 100% within attributes
-LevelCounts_100 <- lapply(paste0("^A", 1:length(nlev), "_"),
+LevelCounts_100 <- lapply(1:length(nlev),
                           function(y) {
-                            out <- apply(Data[, grep(y, x = names(Data)),
-                                                       with = FALSE], 2, sum) /
-                              sum(apply(Data[, grep(y, x = names(Data)),
-                                                      with = FALSE], 2, sum))
+                            out <- apply(Data[, grep(paste0("^A", y, "_"),
+                                                     x = names(Data)),
+                                              with = FALSE], 2, sum) /
+                              sum(apply(Data[, grep(paste0("^A", y, "_"),
+                                                    x = names(Data)),
+                                             with = FALSE], 2, sum))
 
                             names(out) <- attLev[[y]]
                             out
@@ -182,91 +265,78 @@ LevelCounts_rel
 
 
 # Decision Matrix Table !-----------------------------------------------------------------------------------------------
-
-lapply(LevelCounts_100, round, digits = 3)
-
-## Sort attributes based on proximity !---------------------------------------------------------------------------------
 orderAtt <-  order(Importance,
                    decreasing = TRUE)
 
-attLev_ordered <- attLev[orderAtt]
-nlev_ordered <- nlev[orderAtt]
+lapply(LevelCounts_100, round, digits = 3)
 
-LevCountOrder <- LevelCounts_100[orderAtt]
-names(LevCountOrder[[1]]) <- attLev[orderAtt][[1]]
-
-optOrder2 <- vector("list", length(nlev_ordered))
-optOrder2[[1]] <- seq_along(attLev_ordered[[1]])
-
-system.time({
-  for (i in 2:length(nlev_ordered)) {
-
-    AttSel0 <- paste0("Att", orderAtt[i - 1])
-    AttSel1 <- paste0("Att", orderAtt[i])
-
-    DTdistHelp1 <- SKU_choice_DT[, lapply(.SD, tabulate,
-                                          nbins = nlev_ordered[i]),
-                                 by = get(AttSel0),
-                                 .SDcols = AttSel1]
-
-    DTdistHelp1[, grp := rep(1:nlev_ordered[i],
-                             nlev_ordered[i - 1])]
-
-    DTdistHelp <- scale(dcast(DTdistHelp1, get ~ grp,
-                              value.var = AttSel1,
-                              fun = sum)[, get := NULL])[optOrder2[[i - 1]], ]
+# write counts in csv file
+lapply(seq_along(LevelCounts_100),
+       function(x) {
+         cat(paste(names(attLev)[orderAtt[x]]), "\n", file = "DecisionMatOut_unsortiert.csv", append = TRUE)
+         out <- as.data.table(t(LevelCounts_100[[orderAtt[x]]]))
+         write.table(out, file = "DecisionMatOut_unsortiert.csv", append = TRUE,
+                     sep = ";", dec = ",", row.names = FALSE)
+       })
 
 
-    # correct for attributes without variance (no chosen at all)
-    attributes(DTdistHelp)$`scaled:center` == 0
-    DTdistHelp[, which(attributes(DTdistHelp)$`scaled:center` == 0)] <- 0
+## Sort attributes based on proximity !---------------------------------------------------------------------------------
+# orderAtt <-  order(Importance,
+#                    decreasing = TRUE)
 
-    increment_low <- seq(-1, 0, length = nlev_ordered[i - 1])
-    increment_high <- seq(0, 1, length = nlev_ordered[i - 1])
+# Übersicht: Level correlation pro Attribut
+for (i in 1:length(nlev)) {
+  print(cor(Data[, grep(paste0("^A", i, "_"), names(Data)), with = FALSE]))
+}
 
-    distHelp <- rbindlist(
-      lapply(sequence(nlev_ordered[i - 1]),
-             function(j) {
-               data.frame(matrix(seq(increment_low[j],
-                                     increment_high[j],
-                                     length = nlev_ordered[i]),
-                                 nrow = 1))
-             }))
 
-    helpSample <- rbindlist(
-      lapply(1:10000,
-             function(x) {
-               set.seed(x)
-               data.table(
-                 matrix(sample(1:nlev_ordered[i],
-                               size = nlev_ordered[i]), nrow = 1))
-             })
-    )
+# library(GA)
+optOrdeGA <- lapply(1:length(nlev),
+                    function(i) {
+                      # i <- 1
 
-    helpSample[, i := .I]
-    helpSample[, criteria := mean(sapply(DTdistHelp[, unlist(.SD)] - distHelp,
-                                         mean)),
-               by = i, .SDcols = paste0("V", 1:nlev_ordered[i])]
-    helpSample <- helpSample[order(criteria)]
+                      indVal <- sapply(Data[, grep(paste0("^A", i, "_"), names(Data)), with = FALSE], sd) != 0
 
-    orderInd <- unlist(helpSample[1, as.numeric(1:nlev_ordered[i]),
-                                  with = FALSE])
+                      selVars <- names(indVal[indVal])
 
-    optOrder2[[i]] <- orderInd
+                      CorIter <- cor(Data[, mget(selVars)])
 
-    LevCountOrder[[i]] <- LevCountOrder[[i]][orderInd]
-    names(LevCountOrder[[i]]) <- attLev[orderAtt][[i]][orderInd]
-  }
-})
-# User      System verstrichen
-# 151.40        1.61      156.94
+                      out <- 1:nlev[i]
+                      names(out) <- attLev[[i]]
 
-pathOUT <- "J:/Proj/CAPR/AKT/316401010_Pilotstudie_MarketStructure"
-jsonlite::write_json(optOrder2, paste0(pathOUT, "/appData/order.json"))
+                      optDist_GA <- function(x) {
+                        mean(diag(CorIter[x[-nlev[i]], x[-1]]))
+                      }
 
-optOrder2
+                      if (length(selVars) > 2) {
+                        GAiter <- ga("permutation", optDist_GA, min = 1:length(selVars), max = length(selVars):1)
 
-LevCountOrder
+                        out[indVal] <- GAiter@solution[1, ]
+                        names(out[indVal]) <- attLev[[i]][indVal][GAiter@solution[1, ]]
+                      } else {
+                        out <- order(LevelCounts_100[[i]], decreasing = TRUE)
+                        names(out) <- attLev[[i]]
+                      }
+                      out
+
+                      # summary(GAiter)
+                    })
+
+names(optOrdeGA) <- names(attLev)
+optOrdeGA
+optOrdeGA[orderAtt]
+
+pathOUT <- "J:/Proj/CAPR/AKT/316400971_RedBull_Italien/data/decision_tree"
+jsonlite::write_json(optOrdeGA[orderAtt], paste0(pathOUT, "/appData/orderGA.json"))
+
+
+lapply(seq_along(LevelCounts_100),
+       function(x) {
+         cat(paste(names(attLev)[orderAtt[x]]), "\n", file = "DecisionMatOut_sortiert_GA.csv", append = TRUE)
+         out <- as.data.table(t(LevelCounts_100[[orderAtt[x]]][optOrdeGA[[orderAtt[x]]]]))
+         write.table(out, file = "DecisionMatOut_sortiert_GA.csv", append = TRUE,
+                     sep = ";", dec = ",", row.names = FALSE)
+       })
 
 
 
@@ -274,53 +344,12 @@ LevCountOrder
 # END Decision Matrix Table !-------------------------------------------------------------------------------------------
 
 
-# Alternative SKU_choice_DT !-------------------------------------------------------------------------------------------
-# NA --> 0 instead of expand.grid(x)
-SKU_choice_2 <- lapply(Data$ID,
-                       function(x) {
-                         dataHelp <- Data[Data$ID == x, grep("^A", names(Data)), with = FALSE]
 
-                         chosenLevels <- lapply(1:length(nlev),
-                                                function(y) {
-                                                  outHelp <- which(dataHelp[, grep(paste0("^A", y, "_"),
-                                                                                   names(dataHelp)), with = FALSE] == 1)
-                                                  if (length(outHelp) == 0) {
-                                                    0
-                                                  } else {
-                                                    outHelp
-                                                  }
-                                                })
-
-                         out <- data.frame(ID = x, expand.grid(chosenLevels))
-                         names(out) <- c("ID", paste0("Att", 1:length(nlev)))
-
-                         out$Comb <- gsub("NA", "_", apply(out[, -1], 1, paste0, collapse = ""))
-
-                         out
-
-                       })
-
-# str(SKU_choice)
-SKU_choice_2[[1]]
-unique(SKU_choice_2[[1]])
-Data[1, ]
-
-system.time({
-  # SKU_choice_DT <- data.table(Reduce(rbind, SKU_choice))
-  SKU_choice_DT_ALTERNATIVE <- rbindlist(SKU_choice_2)
-})
-SKU_choice_DT[order(ID)]
-SKU_choice_DT_ALTERNATIVE[order(ID)]
-
-SKU_choice_DT[, .N, by = ID]
-SKU_choice_DT_ALTERNATIVE[, .N, by = ID]
-table(SKU_choice_DT[, .N, by = ID]$N)
-table(SKU_choice_DT_ALTERNATIVE[, .N, by = ID]$N)
 
 # SANKEY DIAGRAMM - ALTERNATIVE CODING !--------------------------------------------------------------------------------
 
 system.time({
-  DThelp2 <- SKU_choice_DT_ALTERNATIVE[, grep("^Att", names(SKU_choice_DT_ALTERNATIVE))[orderAtt], with = FALSE]
+  DThelp2 <- SKU_choice_DT[, grep("^Att", names(SKU_choice_DT))[orderAtt], with = FALSE]
 })
 # User      System verstrichen
 # 0              0           0
@@ -373,186 +402,6 @@ sankeyNetwork(Links = sankeyLinks2,
 # !!! END !!! SANKEY DIAGRAMM - ALTERNATIVE CODING !--------------------------------------------------------------------
 
 
-# SANKEY DIAGRAMM !-----------------------------------------------------------------------------------------------------
-# orderAtt <-  order(Importance,
-#                    decreasing = TRUE)
-
-# system.time({
-#   DThelp1 <- data.table(sapply(seq_along(attLev),
-#                               function(x) {
-#                                 sapply(unlist(SKU_choice_DT[, paste0("Att", orderAtt[x]),
-#                                                             with = FALSE]),
-#                                        function(y) {
-#                                          paste0(sprintf("%02d", x), sprintf("%02d", y), "_",
-#                                                 attLev[[orderAtt[x]]][y])
-#                                        })
-#                               }))
-# })
-# # User      System verstrichen
-# # 404.90       17.81      442.47
-# DThelp1
-# prop.table(table(DThelp1[, V1]))
-
-# LevelCounts_100[[1]]
-#
-# DThelp1[, .(V1, V2)]
-# DThelp1[, .(.N), by = .(V1)][, N / sum(N)]
-#
-# table(SKU_choice_DT[, Att1], SKU_choice_DT[, A1_3])
-#
-# SKU_choice_DT[, Att1]
-#
-# colSums(Data[, grep("^A1_", x = names(Data)), with = FALSE]) /
-#   sum(colSums(Data[, grep("^A1_", x = names(Data)), with = FALSE]))
-
-system.time({
-  DThelp2 <- SKU_choice_DT[, grep("^Att", names(SKU_choice_DT))[orderAtt], with = FALSE]
-})
-# User      System verstrichen
-# 0.02        0.13        0.31
-
-# system.time({
-#   helpList1 <- lapply(1:(length(nlev) - 1),
-#                       function(x) {
-#
-#                         LoopDT <- DThelp1[, c(x, x + 1), with = FALSE]
-#                         names(LoopDT) <- c("L1", "L2")
-#
-#                         LoopDT[, c(total = .(.N)),
-#                                by = .(Var1 = pmin(L1, L2),
-#                                       Var2 = pmax(L1, L2))][order(Var1, Var2)]
-#                       })
-# })
-# User       System verstrichen
-# 72.06        1.41       74.94
-
-system.time({
-  helpList2 <- lapply(1:(length(nlev) - 1),
-                     function(x) {
-
-                       LoopDT <- DThelp2[, c(x, x + 1), with = FALSE]
-                       names(LoopDT) <- c("L1", "L2")
-
-                       LoopDT[, T1 := L1 + x * 100]
-                       LoopDT[, T2 := L2 + (x + 1) * 100]
-
-                       LoopDT[, c(total = .(.N)),
-                              by = .(Var1 = pmin(T1, T2),
-                                     Var2 = pmax(T1, T2))][order(Var1, Var2)]
-
-                     })
-})
-# User      System verstrichen
-# 2.75        0.70        3.68
-
-
-# cbind(
-#   helpList2[[1]],
-#   helpList1[[1]]
-# )
-#
-# lapply(seq_along(helpList2),
-#        function(i) {
-#          cbind(helpList2[[i]],
-#                helpList1[[i]])
-#        })
-#
-# lapply(seq_along(helpList2),
-#        function(i) {
-#          all(helpList2[[i]]$total == helpList1[[i]]$total)
-#        })
-
-
-# helpList1[[1]][, sum(total), by = .(Var1)][, .(Var1, V1, V1 / sum(V1))]
-# helpList1[[1]][, sum(total), by = .(Var2)][, .(Var2, V1, V1 / sum(V1))]
-#
-# helpList1[[2]][, sum(total), by = .(Var1)]
-
-# lookup1 <- data.table(Var1 = unlist(sapply(seq_along(attLev),
-#                                           function(x) {
-#                                             sapply(seq_along(attLev[[orderAtt[x]]]),
-#                                                    function(y) {
-#                                                      paste0(sprintf("%02d", x), sprintf("%02d", y), "_",
-#                                                             attLev[[orderAtt[x]]][y])
-#                                                    })
-#                                           })),
-#                      Var2 = unlist(sapply(seq_along(attLev),
-#                                           function(x) {
-#                                             sapply(seq_along(attLev[[orderAtt[x]]]),
-#                                                    function(y) {
-#                                                      paste0(sprintf("%02d", x), sprintf("%02d", y), "_",
-#                                                             attLev[[orderAtt[x]]][y])
-#                                                    })
-#                                           })),
-#                      code = sequence(sum(nlev)) - 1)
-
-lookup2 <- data.table(Var1 = rep(seq_along(nlev[orderAtt]), nlev[orderAtt]) * 100 + sequence(nlev[orderAtt]),
-                      Var2 = rep(seq_along(nlev[orderAtt]), nlev[orderAtt]) * 100 + sequence(nlev[orderAtt]),
-                      code = sequence(sum(nlev[orderAtt])) - 1)
-
-# lookup2 <- data.table(Var1 = rep(seq_along(nlev)[orderAtt], nlev[orderAtt]) * 100 + sequence(nlev[orderAtt]),
-#                      Var2 = rep(seq_along(nlev)[orderAtt], nlev[orderAtt]) * 100 + sequence(nlev[orderAtt]),
-#                      code = sequence(sum(nlev[orderAtt])) - 1)
-
-# lookup2 <- data.table(Var1 = rep(seq_along(nlev), nlev) * 100 + sequence(nlev),
-#                       Var2 = rep(seq_along(nlev), nlev) * 100 + sequence(nlev),
-#                       code = sequence(sum(nlev)) - 1)
-
-# lookup2 == lookup3
-# identical(lookup2, lookup3)
-
-# cbind(lookup1, lookup2)
-
-# system.time({
-#   helpLinks1 <- Reduce(rbind, helpList1)
-# })
-# User      System verstrichen
-# 0.15        0.20        0.36
-
-system.time({
-  # helpLinks2 <- Reduce(rbind, helpList2)
-  helpLinks2 <- rbindlist(helpList2)
-})
-# User      System verstrichen
-# 0              0           0
-
-# helpLinks1 <- helpLinks1[lookup1[, .(Var1, code)], on = "Var1", nomatch = 0]
-# helpLinks1 <- helpLinks1[lookup1[, .(Var2, code)], on = "Var2", nomatch = 0]
-
-
-# sankeyLinks1 <- helpLinks1[, .(code, i.code, total)][order(code, i.code)]
-# names(sankeyLinks1) <- c("source", "target", "value")
-
-# sankeyNodes1 <- data.frame(name = unlist(attLev[orderAtt]))
-
-# sankeyNetwork(Links = sankeyLinks1,
-#               Nodes = sankeyNodes1,
-#               Source = "source",
-#               Target = "target",
-#               Value = "value",
-#               NodeID = "name",
-#               fontSize = 12,
-#               nodeWidth = 15)
-
-
-helpLinks2 <- helpLinks2[lookup2[, .(Var1, code)], on = "Var1", nomatch = 0]
-helpLinks2 <- helpLinks2[lookup2[, .(Var2, code)], on = "Var2", nomatch = 0]
-
-sankeyLinks2 <- helpLinks2[, .(code, i.code, total)][order(code, i.code)]
-names(sankeyLinks2) <- c("source", "target", "value")
-
-sankeyNodes2 <- data.frame(name = unlist(attLev[orderAtt]))
-
-sankeyNetwork(Links = sankeyLinks2,
-              Nodes = sankeyNodes2,
-              Source = "source",
-              Target = "target",
-              Value = "value",
-              NodeID = "name",
-              fontSize = 12,
-              nodeWidth = 15)
-
-
 
 # treemap data
 group <- rep(names(attLev[order(-Importance)]),
@@ -584,7 +433,10 @@ combs
 combs[, Combination := do.call(paste0, .SD), .SDcols = VarSelect]
 combs
 
-attFact <- attLev
+attFact <- lapply(attLev,
+                  function(x) {
+                    c("All Levels", x)
+                  })
 names(attFact) <- VarSelect
 
 combs[, paste0("Fact", VarSelect) := .SD,
@@ -594,7 +446,9 @@ combs
 system.time({
   for (j in seq_along(nlev)) {
     set(combs, i = NULL, j = paste0("Fact", VarSelect)[j],
-        value = factor(combs[[j]], labels = attFact[[j]]))
+        value = factor(combs[[j]],
+                       levels = seq_along(attFact[[j]]) - 1,
+                       labels = attFact[[j]]))
   }
 })
 # User      System verstrichen
@@ -604,67 +458,368 @@ combs
 combs_labels <- combs[, mget(c("Combination", paste0("Fact", VarSelect), "N"))]
 combs_labels
 
-# system.time({
-#   helpTest <- sapply(seq_along(nlev),
-#                      function(i) {
-#                        helpDT <- combs[, mget(VarSelect)][, i, with = FALSE]
-#                        FactLabels <- attFact[[names(helpDT)]]
-#                        FactLabels
-#                        # factor(helpDT, labels = FactLabels)
-#                        helpDT[, lapply(.SD, factor, labels = FactLabels)]
-#                      })
-# })
-# # User      System verstrichen
-# # 0.51        0.30        0.83
-# as.data.table(helpTest)
+
+# graphical models !----------------------------------------------------------------------------------------------------
+
+# library(pcalg)
+# example(pcalg)
+
+library(huge)
+
+help(huge)
+
+
+test_huge <- huge(as.matrix(Data[, mget(names(Data)[grep("^A", names(Data))[validVars]])]))
+plot(test_huge)				 #Not aligned
+plot(test_huge, align = TRUE) #Aligned
+huge.plot(test_huge$path[[3]])
+
+out.select = huge.select(test_huge)
+plot(out.select)
+
+
+# data_huge <- as.matrix(Data[, mget(names(Data)[grep("^A", names(Data))[validVars]])])
+data_huge <- as.matrix(Data[, mget(names(Data)[grep("^nAtt[1-9]", names(Data))])])[, -1]
+# data_huge <- as.matrix(Data[, mget(names(Data)[grep("^R", names(Data))])])[, -1]
+# data_huge[is.na(data_huge)] <- 0
+
+out.glasso = huge(data_huge, method = "glasso")
+plot(out.glasso)				 #Not aligned
+plot(out.glasso, align = TRUE) #Aligned
+out.select = huge.select(out.glasso, criterion = "ebic")
+plot(out.select)
+
+summary(out.select)
+
+out.select$data
+
+qgraph(out.select$refit,
+       layout = 'spring',
+       labels = colnames(data_huge))
+
+library(mgm)
+library(qgraph)
+
+# data_mgm <- as.matrix(Data[, mget(names(Data)[grep("^A", names(Data))[validVars]])])
+data_mgm <- as.matrix(Data[, mget(names(Data)[grep("^nAtt[1-9]", names(Data))])])[, -1]
+# data_mgm <- as.matrix(Data[, mget(names(Data)[grep("^R", names(Data))])])[, -1]
+# data_mgm[is.na(data_mgm)] <- 0
+
+type_mgm <- rep("p", ncol(data_mgm))
+cat_mgm <- rep(1, ncol(data_mgm))
+# cat_mgm <- apply(data_mgm, 2, max, na.rm = TRUE) + c(1, 0, 0, 0, 0, 0, 0)
+
+fit <- mgm(data_mgm, type_mgm, cat_mgm, lamda.sel = "EBIC")
+
+qgraph(fit$pairwise$wadj,
+       edge.color = fit$pairwise$edgecolor,
+       layout = 'spring',
+       labels =  colnames(data_mgm))
+
+
+
+# PCA
+
+data_pca <- Data[, mget(names(Data)[grep("^A", names(Data))])]
+validVars_pca <- lapply(data_pca, var) != 0
+data_pca <- data_pca[, which(validVars_pca), with = FALSE]
+data_pca[is.na(data_pca)] <- 0
+
+# data_pca <- Data[, mget(names(Data)[grep("^R", names(Data))])]
+# data_pca[is.na(data_pca)] <- 0
+
+# data_pca <- Data[, -1]
+# validVars_pca <- lapply(data_pca, var) != 0
+# data_pca <- data_pca[, which(validVars_pca), with = FALSE]
+# data_pca[is.na(data_pca)] <- 0
+
+data_pca <- Data[, mget(names(Data)[grep("^nAtt", names(Data))])]
+validVars_pca <- lapply(data_pca, var) != 0
+data_pca <- data_pca[, which(validVars_pca), with = FALSE]
+data_pca[is.na(data_pca)] <- 0
+
+# test_pca <- prcomp(Data[, mget(names(Data)[grep("^A", names(Data))])[validVars]],
+#                    center = TRUE,
+#                    scale. = TRUE)
+
+test_pca <- prcomp(data_pca,
+                   center = TRUE,
+                   scale. = TRUE)
+
+summary(test_pca)
+plot(test_pca, type = "l")
+
+# library(devtools)
+# install_github("ggbiplot", "vqv")
+
+library(ggbiplot)
+g <- ggbiplot(test_pca, obs.scale = 1, var.scale = 1,
+              groups = NULL, ellipse = TRUE,
+              circle = TRUE)
+g <- g + scale_color_discrete(name = '')
+g <- g + theme(legend.direction = 'horizontal',
+               legend.position = 'top')
+print(g)
+
+# END - graphical models !----------------------------------------------------------------------------------------------
+
+
+# Respondent Segmentation !---------------------------------------------------------------------------------------------
+
+Data_SegHelp <- melt(Data, measure.vars = patterns("^A"), id.vars = "ID")[order(ID)]
+Data_SegHelp[, grp := rep(1:length(nlev), nlev)]
+Data_nChoAtt <- Data_SegHelp[, sum(value), by = .(ID, grp)]
+
+Data_aggCho <- dcast(Data_nChoAtt, ID ~ grp, value.var = "V1")
+names(Data_aggCho) <- c("ID", paste0("nAtt", 1:length(nlev)))
+Data_aggCho
+
+lapply(Data_aggCho, table)
+nlev
+
+Data <- Data[Data_aggCho, on = "ID"]
+Data[, nAttSel := rowSums(!is.na(Data[, grep("^R", names(Data)), with = FALSE]))]
+
+testClust_Resp <- hclust(as.dist(cor(t(Data[, grep("^nAtt", names(Data))[-1], with = FALSE]))))
+summary(testClust_Resp)
+plot(testClust_Resp)
+table(cutree(testClust_Resp, k = 10))
+
+
+
+# LC segmentation - TEST
+validVars <- lapply(Data[, mget(names(Data)[grep("^A", names(Data))])], var) != 0
+
+formulaList <- lapply(paste(names(Data)[grep("^A", names(Data))[validVars]], 1, sep = "~"), as.formula)
+
+library(depmixS4)
+# LCtestRun <- mix(formulaList,
+#                  data = Data, # the dataset to use
+#                  nstates = 5, # the number of latent classes
+#                  family = lapply(formulaList,
+#                                  function(x) {
+#                                    multinomial()
+#                                  }))
+# LCtestRun
 #
-# system.time({
-#   combs_labels <- data.table(Combination = combs[, Combination],
-#                              sapply(1:length(nlev),
-#                                     function(x) {
-#                                       sapply(unlist(combs[, x, with = FALSE]),
-#                                              function(y) {
-#                                                do.call(switch, c(y, as.list(attLev[[x]])))
-#                                              })
-#                                     }),
-#                              N = combs$N)
-# })
-# # User       System verstrichen
-# # 17.22        0.56       17.91
-# names(combs_labels) <- c("Combination", names(attLev), "N")
-# combs_labels
-
-
-
-SKU_choice_DT[, .(.N), by = .(Comb)][order(-N)]
-
-SKUs_per_person <- SKU_choice_DT[, lapply(.SD, list), by = ID,
-                                .SDcols = "Comb"]
-
-37132222 %in% SKUs_per_person[1, Comb][[1]]
-
-selectedComb <- as.numeric(combs_labels[1, Combination])
-
-IDselect <- SKUs_per_person[sapply(SKUs_per_person[, Comb],
-                                   function(x) {
-                                     selectedComb %in% x
-                                   }
-                                   ), ID]
-
-IDselect
-length(IDselect)
-
-substDT <- SKU_choice_DT[ID %in% IDselect, ]
-
-substDT[, .(.N), by = .(Comb)][, Substitution := N / max(N)][order(-N)]
-
-# DAUERT ZU LANGE UND IST ZU SPEICHERINTENIV !--------------------------------------------------------------------------
-# dummyChoice <- data.table::dcast(SKU_choice_DT[, .(ID, Comb)], ID ~ Comb)
+# LCtestRun_fit <- fit(LCtestRun)
+# summary(LCtestRun_fit)
 #
-# helpCor <- data.table::data.table(dummyChoice[, "ID"],
-#                                   !is.na(dummyChoice[, -1, with = FALSE])) * 1
+# LCtestRun_fit_posterior <- depmixS4::posterior(LCtestRun_fit) # Saving Class Assignments
+# head(round(LCtestRun_fit_posterior, 3))
 #
-# stats::cor(helpCor[, -1, with = FALSE])
+# table(LCtestRun_fit_posterior$state)
+
+
+# test for 2-10 solutions ...
+
+LCtest_Grid <- lapply(2:10,
+                      function(x) {
+                        set.seed(x)
+                        LCRun <- mix(formulaList,
+                                     data = Data, # the dataset to use
+                                     nstates = x, # the number of latent classes
+                                     family = lapply(formulaList,
+                                                     function(x) {
+                                                       multinomial()
+                                                     }))
+
+                        fit(LCRun)
+                      })
+
+
+LCtest_Grid_posterior <- lapply(LCtest_Grid, posterior)
+
+LCtest_Grid_segs <- data.table(sapply(LCtest_Grid_posterior,
+                                     function(x) {
+                                       x$state
+                                     }))
+
+names(LCtest_Grid_segs) <- paste0("LC", 2:10)
+
+LCtest_Grid_segs
+
+lapply(LCtest_Grid_segs, table)
+
+lapply(2:9,
+       function(x) {
+         table(LCtest_Grid_segs[, get(paste0("LC", x))],
+               LCtest_Grid_segs[, get(paste0("LC", x + 1))])
+       })
+
+
+## Sankey - LC Runs
+Help_LC_Sankey_1 <- copy(LCtest_Grid_segs)
+
+for (i in 3:10) {
+  sel1 <- paste0("LC", i)
+  sel2 <- paste0("LC", i - 1)
+  Help_LC_Sankey_1[, c(sel1) := get(sel1) + max(get(sel2))]
+}
+
+Help_LC_Sankey_1 <- Help_LC_Sankey_1 - 1
+
+sankeyLinks_LC <- rbindlist(
+  lapply(1:8,
+         function(x) {
+
+           LoopDT <- Help_LC_Sankey_1[, c(x, x + 1), with = FALSE]
+           names(LoopDT) <- c("L1", "L2")
+
+           LoopDT[, T1 := L1]
+           LoopDT[, T2 := L2]
+
+           LoopDT[, c(total = .(.N)),
+                  by = .(Var1 = pmin(T1, T2),
+                         Var2 = pmax(T1, T2))][order(Var1, Var2)]
+
+         })
+)
+names(sankeyLinks_LC) <- c("source", "target", "value")
+
+sankeyNodes_LC <- data.frame(name = paste0("LC_", rep(2:10, 2:10), "_", sequence(2:10)))
+
+sankeyNetwork(Links = sankeyLinks_LC,
+              Nodes = sankeyNodes_LC,
+              Source = "source",
+              Target = "target",
+              Value = "value",
+              NodeID = "name",
+              fontSize = 12,
+              nodeWidth = 15)
+
+## END - Sankey - LC Runs
+
+
+# Test Reproducability LC segments !------------------------------------------------------------------------------------
+LCtest_4 <- lapply(1:10,
+                    function(x) {
+                      set.seed(x)
+                      LCRun <- mix(formulaList,
+                                   data = Data, # the dataset to use
+                                   nstates = 4, # the number of latent classes
+                                   family = lapply(formulaList,
+                                                   function(x) {
+                                                     multinomial()
+                                                   }))
+
+                      print(x)
+                      fit(LCRun, verbose = TRUE)
+                    })
+
+lapply(1:9,
+       function(x) {
+         table(posterior(LCtest_4[[x]])$state,
+               posterior(LCtest_4[[x + 1]])$state)
+       })
+
+LCtest_6 <- lapply(1:4,
+                   function(x) {
+                     set.seed(x)
+                     LCRun <- mix(formulaList,
+                                  data = Data, # the dataset to use
+                                  nstates = 6, # the number of latent classes
+                                  family = lapply(formulaList,
+                                                  function(x) {
+                                                    multinomial()
+                                                  }))
+
+                     print(x)
+                     fit(LCRun, verbose = TRUE)
+                   })
+
+lapply(1:3,
+       function(x) {
+         table(posterior(LCtest_6[[x]])$state,
+               posterior(LCtest_6[[x + 1]])$state)
+       })
+
+
+LCtest_10 <- lapply(1:10,
+                    function(x) {
+                      set.seed(x)
+                      LCRun <- mix(formulaList,
+                                   data = Data, # the dataset to use
+                                   nstates = 10, # the number of latent classes
+                                   family = lapply(formulaList,
+                                                   function(x) {
+                                                     multinomial()
+                                                   }))
+
+                      print(x)
+                      fit(LCRun, verbose = FALSE)
+                    })
+
+
+LCtest_10_posterior <- lapply(LCtest_10, posterior)
+
+LCtest_10_segs <- data.table(sapply(LCtest_10_posterior,
+                                      function(x) {
+                                        x$state
+                                      }))
+
+lapply(1:9,
+       function(x) {
+         table(LCtest_10_segs[, get(paste0("V", x))],
+               LCtest_10_segs[, get(paste0("V", x + 1))])
+       })
+
+lapply(1:9,
+       function(x) {
+         chisq.test(table(LCtest_10_segs[, get(paste0("V", x))],
+               LCtest_10_segs[, get(paste0("V", x + 1))]))
+       })
+
+# END - Test Reproducability LC segments !------------------------------------------------------------------------------
+
+
+# Profile Segmentations !-----------------------------------------------------------------------------------------------
+SPSS_data <- foreign::read.spss("J:/Proj/CAPR/AKT/316401010_Pilotstudie_MarketStructure/Clean_SPSS_DEU.SAV",
+                                to.data.frame = TRUE,
+                                use.value.labels = TRUE)
+
+frame_data <- data.table(SPSS_data[, -c(grep("AttributChoice", names(SPSS_data)),
+                                        grep("FilterConjoint", names(SPSS_data)),
+                                        grep("DataCollection", names(SPSS_data)),
+                                        grep("F12", names(SPSS_data)),
+                                        grep("zzAutoJump", names(SPSS_data)))])
+frame_data[, ID := Respondent_Serial]
+
+LCtest_Grid_segs_ID <- copy(LCtest_Grid_segs)[, ID := Data[, ID]]
+
+frame_data <- frame_data[LCtest_Grid_segs_ID, on = "ID"]
+frame_data
+
+seg2profile <- "LC4"
+
+lapply(c("zzAge", "zzGender", "SC06", "SC08", "S04"),
+       function(y) {
+         sapply(split(frame_data[, mget(c(y, seg2profile))][order(get(seg2profile))], by = seg2profile),
+                function(x) {
+                  table(x[, 1, with = FALSE])
+                })
+       })
+
+lapply(c("zzAge", "zzGender", "SC06", "SC08", "S04"),
+       function(y) {
+         sapply(split(frame_data[, mget(c(y, seg2profile))][order(get(seg2profile))], by = seg2profile),
+                function(x) {
+                  round(prop.table(table(x[, 1, with = FALSE])), 3)
+                })
+       })
+
+for (y in c("zzAge", "zzGender", "SC06", "SC08", "S04")) {
+         heatmap(
+           sapply(split(frame_data[, mget(c(y, seg2profile))][order(get(seg2profile))], by = seg2profile),
+                  function(x) {
+                    prop.table(table(x[, 1, with = FALSE]))
+                  })
+         )
+       }
+
+
+# !---------------------------------------------------------------------------------------------------------------------
+
 
 # Clustering Tests !----------------------------------------------------------------------------------------------------
 
