@@ -198,7 +198,9 @@ Importance <- reactive({
 
   # Alternative Importance calculation !----------------------------------------------------------------------------------
 
-  Data_Weighted <- copy(data())
+  Data <- data()
+
+  Data_Weighted <- copy(Data)
   for (i in 1:length(defIN()$nlev)) {
     sel1 <- paste0("A", i, "_", seq_along(grep(paste0("A", i, "_"),
                                                names(Data_Weighted))))
@@ -225,9 +227,26 @@ Importance <- reactive({
   DT_importance[, V2 := V1 / defIN()$nlev]
   DT_importance[, imp2 := V2 / sum(V2)]
 
+  Data_inverseRanks <- Data[, mget(c("ID", names(Data)[grep("^R", names(Data))]))]
+
+  Data_inverseRanks[, names(Data)[grep("^R", names(Data))] :=
+                      lapply(.SD,
+                             function(x) {
+                               out <- (length(defIN()$nlev) + 1) - x
+                               sapply(out,
+                                      function(y) {
+                                        ifelse(is.na(y), 0, y)
+                                      })
+                             }), .SDcols = names(Data)[grep("^R", names(Data))]]
+
+  Importance_invRanks <- sapply(Data_inverseRanks[, mget(names(Data_inverseRanks)[grep("^R", names(Data_inverseRanks))])],
+                                mean)
+
+  DT_importance[, imp3 := Importance_invRanks / sum(Importance_invRanks)]
+
   # Attribute counts == attribute importance
 
-  Importance <- DT_importance[, imp2]
+  Importance <- DT_importance[, imp3]
   names(Importance) <- names(defIN()$attLev)
 
   # Level counts - 100% within attributes

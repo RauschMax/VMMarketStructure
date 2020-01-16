@@ -75,6 +75,15 @@ server <- function(input, output, session) {
   })
 
 
+
+  output$test2 <- renderPrint({
+
+    orderIN()
+
+
+  })
+
+
   # output$portGRID <- DT::renderDataTable({
   #
   #   combs <- SKU_choice_DT()[, .(.N), by = .(Att1, Att2, Att3, Att4, Att5, Att6, Att7, Att8)][order(-N)]

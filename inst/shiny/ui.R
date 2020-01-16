@@ -106,7 +106,8 @@ ui <- kantarPage(
       tabItem(
         tabName = 'home',
         h2(),
-        kantarBox(uiOutput("attLev"))
+        kantarBox(uiOutput("attLev")),
+        kantarBox(verbatimTextOutput("test2"))
       ),
 
 
