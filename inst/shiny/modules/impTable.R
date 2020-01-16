@@ -12,7 +12,7 @@ observe({
 
              DT::datatable(dt, selection = list(mode = 'single', target = 'column'),
                            filter = "none", autoHideNavigation = TRUE, rownames = FALSE,
-                           escape = FALSE, style = "default", class = 'cell-border',
+                           escape = FALSE, style = "default", class = 'compact',
                            options = list(columnDefs = list(list(className = 'dt-center', targets = '_all')),
                                           pageLength = 1,
                                           ordering = FALSE,

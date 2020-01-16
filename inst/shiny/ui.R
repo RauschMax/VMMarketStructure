@@ -67,10 +67,10 @@ ui <- kantarPage(
 
   ####Sidebar####
   sidebar = sidebarMenu(
-    menuItem(tabName = 'home', text = 'Overview', icon = icon('home'), selected = TRUE),
-    menuItem(tabName = 'decision', text = 'decision matrix', icon = icon('shopping-cart')),
-    menuItem(tabName = 'sankey', text = 'Sankey Diagram', icon = icon('road')),
-    menuItem(tabName = 'tree', text = 'Treemap', icon = icon('tree')),
+    menuItem(tabName = 'home', text = 'Overview', icon = icon('eye'), selected = TRUE),
+    menuItem(tabName = 'decision', text = 'Decision Hierarchy', icon = icon('sort-amount-desc')),
+    menuItem(tabName = 'buyseg', text = 'Segmentation of Buyers', icon = icon('users')),
+    menuItem(tabName = 'demand', text = 'Demand & Substitution', icon = icon('shopping-basket')),
     menuItem(tabName = 'portfolio', text = 'Portfolio Rankings', icon = icon('trophy'))
   ),
 
@@ -112,35 +112,47 @@ ui <- kantarPage(
 
       tabItem(
         tabName = 'decision',
-        column(
-          div(style = "overflow-y:scroll; overflow-x:auto;
-                       height:92vh; font-size:80%",
-              uiOutput("decMatUI")
-              ),
-               width = 8),
-        kantarBox(title = "Selected Combination",
-          uiOutput("selComb"),
-          width = 4),
-        valueBoxOutput("demandBox", width = 4),
-        valueBoxOutput("supplyBox", width = 4),
-        valueBoxOutput("incrementBox", width = 4),
-        kantarBox(
-          div(style = "overflow-y:scroll; overflow-x:scroll;
-                       height:42vh; width:100%; font-size:80%",
-              verbatimTextOutput("test2")),
-          width = 4)
+        tabBox(
+            tabPanel(
+              title = 'Decision Matrix',
+              div(style = "overflow-y:scroll; overflow-x:auto;
+                           height:72vh; font-size:80%; margin-bottom:10px;",
+                  uiOutput("decMatUI")
+              )),
+            tabPanel(
+              title = 'Decision Sankey',
+              div(style = "height:72vh; margin-bottom:10px;",
+                  sankeyNetworkOutput("Sankey"))
+            ), width = 12),
+        kantarBox(h4("Segment Selection"), width = 6),
+        kantarBox(h4("Level Selection"), width = 6)
+
+        # style = "overflow-y:scroll; overflow-x:auto; height:15vh;",
+
+        # ,
+        # kantarBox(title = "Selected Combination",
+        #   uiOutput("selComb"),
+        #   width = 4),
+        # valueBoxOutput("demandBox", width = 4),
+        # valueBoxOutput("supplyBox", width = 4),
+        # valueBoxOutput("incrementBox", width = 4),
+        # kantarBox(
+        #   div(style = "overflow-y:scroll; overflow-x:scroll;
+        #                height:42vh; width:100%; font-size:80%",
+        #       verbatimTextOutput("test2")),
+        #   width = 4)
       ),
 
 
       tabItem(
-        tabName = 'sankey',
-        sankeyNetworkOutput("Sankey")
+        tabName = 'buyseg',
+        "Segmentation of Buyers"
       ),
 
 
       tabItem(
-        tabName = 'tree',
-        plotOutput("treemap")
+        tabName = 'demand',
+        "Demand & Substitution"
       ),
 
 
