@@ -73,6 +73,35 @@ data <- eventReactive(input$go, {
 
 })
 
+# choices, combinations and ranks
+lc_segs <- eventReactive(input$go, {
+
+  validate(
+    need(input$study, "Wait for it!")
+  )
+
+  validate(
+    need(pw(), "Wait for it!")
+  )
+
+  if (isolate(input$pw) == isolate(pw())) {
+    get_lcSegs <- BeastRServer::azure_blob_call("GET",
+                                              storage_account = "shinyapp",
+                                              storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
+                                                                   "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
+                                                                   "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
+                                              container = paste0("ms", input$study),
+                                              blob = "LC_segs.csv")
+
+    lc_segs <- as.data.table(httr::content(get_lcSegs, type = "text/csv", encoding = "UTF-8"))
+
+    print("LC read")
+    lc_segs
+
+  }
+
+})
+
 # # choices, combinations and ranks
 # comb <- eventReactive(input$go, {
 #

@@ -35,6 +35,10 @@ server <- function(input, output, session) {
   source("./modules/impDiagrams.R",
          local = TRUE)$value
 
+  ## Segmentation Tab
+  source("./modules/segTab.R",
+         local = TRUE)$value
+
   ## Substitution Table
   source("./modules/substTable.R",
          local = TRUE)$value

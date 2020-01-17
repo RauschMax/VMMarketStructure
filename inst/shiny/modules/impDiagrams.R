@@ -80,7 +80,8 @@ output$Sankey <- renderSankeyNetwork({
                 Value = "value",
                 NodeID = "name",
                 fontSize = 12,
-                nodeWidth = 15)
+                nodeWidth = 15) %>%
+    htmlwidgets::onRender('function(el) { el.getElementsByTagName("svg")[0].removeAttribute("viewBox") }')
 
 })
 

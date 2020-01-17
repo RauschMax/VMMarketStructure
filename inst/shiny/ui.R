@@ -97,6 +97,7 @@ ui <- kantarPage(
                     margin-left: -15px;}"
         ))),
 
+
     conditionalPanel("($('html').hasClass('shiny-busy'))",
                      absolutePanel(style = "text-align:center; z-index:500;",
                                    tags$img(src = 'loading_small.gif', width = '50px'),
@@ -147,7 +148,25 @@ ui <- kantarPage(
 
       tabItem(
         tabName = 'buyseg',
-        "Segmentation of Buyers"
+        tabBox(
+          tabPanel(
+            title = 'Select Segment Solution',
+            column(kantarBox(width = 12,
+                             sankeyNetworkOutput("SankeyLC")),
+                   kantarBox(width = 12,
+                             uiOutput("segSelectUI")),
+                   width = 8),
+            column(div(style = "overflow-y: scroll; height:80vh; font-size:80%;",
+                                 DT::dataTableOutput("segTable")),
+                   width = 4)
+          ),
+          tabPanel(
+            title = 'Segment Profile',
+            "Segment Profile"),
+          tabPanel(
+            title = 'Personas',
+            "Segment Personas"),
+          width = 12)
       ),
 
 
