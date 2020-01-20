@@ -5,7 +5,7 @@ segSankeyData <- reactive({
   )
 
   ## Sankey - LC Runs
-  Help_LC_Sankey_1 <- lc_segs()
+  Help_LC_Sankey_1 <- copy(lc_segs())
 
   for (i in 3:(ncol(Help_LC_Sankey_1) + 1)) {
     sel1 <- paste0("LC", i)

@@ -106,8 +106,8 @@ ui <- kantarPage(
     tabItems(
       tabItem(
         tabName = 'home',
-        h2(),
-        kantarBox(uiOutput("attLev")),
+        h2("HOME TAB"),
+        # kantarBox(uiOutput("attLev")),
         kantarBox(verbatimTextOutput("test2"))
       ),
 
@@ -126,7 +126,8 @@ ui <- kantarPage(
               div(style = "height:72vh; margin-bottom:10px;",
                   sankeyNetworkOutput("Sankey"))
             ), width = 12),
-        kantarBox(h4("Segment Selection"), width = 6),
+        kantarBox(h4("Segment Selection"),
+                  uiOutput("selSegment"), width = 6),
         kantarBox(h4("Level Selection"), width = 6)
 
         # style = "overflow-y:scroll; overflow-x:auto; height:15vh;",
@@ -172,7 +173,15 @@ ui <- kantarPage(
 
       tabItem(
         tabName = 'demand',
-        "Demand & Substitution"
+        column(kantarBox(valueBoxOutput("demandBox", width = 6),
+                         valueBoxOutput("compBox", width = 6),
+                         width = 12),
+               kantarBox("Substituion Matrix",
+                         width = 12),
+               width = 8),
+        kantarBox(uiOutput("attLev"),
+                  width = 4)
+
       ),
 
 

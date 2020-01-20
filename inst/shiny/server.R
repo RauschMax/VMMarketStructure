@@ -39,6 +39,10 @@ server <- function(input, output, session) {
   source("./modules/segTab.R",
          local = TRUE)$value
 
+  ## Demand & Substitution Table
+  source("./modules/demandSubstTab.R",
+         local = TRUE)$value
+
   ## Substitution Table
   source("./modules/substTable.R",
          local = TRUE)$value
@@ -82,7 +86,7 @@ server <- function(input, output, session) {
 
   output$test2 <- renderPrint({
 
-    orderIN()
+    segDefIN()
 
 
   })

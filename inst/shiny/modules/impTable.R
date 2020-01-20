@@ -51,101 +51,45 @@ output$decMatUI <- renderUI({
 
 })
 
-output$selComb <- renderUI({
-
-  tags$table(style = "font-size:10px; width:100%;",
-             lapply(seq_along(Imp_ordered()$LevCount),
-                    function(x) {
-                      IDselected <- paste0("decMat", x, "_columns_selected")
-                      tags$tr(
-                        tags$td(style = "font-size:10px; padding-right:10px;",
-                                h6(toupper(names(Imp_ordered()$LevCount)[x]))
-                        ),
-                        tags$td(style = "font-size:12px; padding-right:10px;",
-                                Imp_ordered()$attLev_ordered[[x]][input[[IDselected]] + 1])
-                        )
-                    }
-             )
-  )
-
-})
-
-
-## Demand !----
-output$demandBox <- renderValueBox({
+output$selSegment <- shiny::renderUI({
 
   validate(
-    need(all(sapply(seq_along(Imp_ordered()$LevCount),
-                    function(x) {
-                      IDselected <- paste0("decMat", x, "_columns_selected")
-                      !is.null(input[[IDselected]])
-                    })),
-         "")
+    need(segDefIN(), "Please load the data.")
   )
 
-  demand <- sum(sapply(seq_along(Imp_ordered()$LevCount),
-                   function(x) {
-                     IDselected <- paste0("decMat", x, "_columns_selected")
-                     Imp_ordered()$LevCount[[x]][input[[IDselected]] + 1]
-                   }))
+  nSegs <- length(segDefIN()$segLevFact)
 
-  valueBox(value = round(demand, 2),
-           subtitle = "Demand",
-           color = "green",
-           icon = icon("heart-o"))
-})
-
-
-## Supply !----
-output$supplyBox <- renderValueBox({
-
-  validate(
-    need(all(sapply(seq_along(Imp_ordered()$LevCount),
+  choList <- lapply(seq_along(segDefIN()$segLevFact),
                     function(x) {
-                      IDselected <- paste0("decMat", x, "_columns_selected")
-                      !is.null(input[[IDselected]])
-                    })),
-         "Please select a combination across all attributes.")
-  )
+                      vec <- paste0(x, "_", seq_along(segDefIN()$segLevFact[[x]]))
+                      names(vec) <- segDefIN()$segLevFact[[x]]
+                      vec
+                    })
 
-  # supply <- sum(sapply(seq_along(Imp_ordered()$LevCount),
-  #                      function(x) {
-  #                        IDselected <- paste0("decMat", x, "_columns_selected")
-  #                        Supply()$supply[[x]][input[[IDselected]] + 1]
-  #                      }))
+  names(choList) <- names(segDefIN()$segLevFact)
 
-  valueBox(value = round(42.42, 2),
-           subtitle = "Supply",
-           color = "lime",
-           icon = icon("shopping-basket"))
+  shiny::selectizeInput('segs', 'Select Subgroup', choices = choList, multiple = TRUE)
+
 })
 
-
-## Incrementality !----
-output$incrementBox <- renderValueBox({
-
-  validate(
-    need(all(sapply(seq_along(Imp_ordered()$LevCount),
-                    function(x) {
-                      IDselected <- paste0("decMat", x, "_columns_selected")
-                      !is.null(input[[IDselected]])
-                    })),
-         "")
-  )
-
-  increment <- sum(sapply(seq_along(Imp_ordered()$LevCount),
-                       function(x) {
-                         IDselected <- paste0("decMat", x, "_columns_selected")
-                         Imp_ordered()$LevCount[[x]][input[[IDselected]] + 1]
-                       }
-                       )) - 42.42
-
-  valueBox(value = round(increment, 2),
-           subtitle = "Incrementality",
-           color = "purple",
-           icon = icon("star-o"))
-})
-
+# output$selComb <- renderUI({
+#
+#   tags$table(style = "font-size:10px; width:100%;",
+#              lapply(seq_along(Imp_ordered()$LevCount),
+#                     function(x) {
+#                       IDselected <- paste0("decMat", x, "_columns_selected")
+#                       tags$tr(
+#                         tags$td(style = "font-size:10px; padding-right:10px;",
+#                                 h6(toupper(names(Imp_ordered()$LevCount)[x]))
+#                         ),
+#                         tags$td(style = "font-size:12px; padding-right:10px;",
+#                                 Imp_ordered()$attLev_ordered[[x]][input[[IDselected]] + 1])
+#                         )
+#                     }
+#              )
+#   )
+#
+# })
 
 output$test2 <- renderPrint({
 

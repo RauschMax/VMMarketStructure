@@ -102,6 +102,61 @@ lc_segs <- eventReactive(input$go, {
 
 })
 
+# choices, combinations and ranks
+segments <- eventReactive(input$go, {
+
+  validate(
+    need(input$study, "Wait for it!")
+  )
+
+  validate(
+    need(pw(), "Wait for it!")
+  )
+
+  if (isolate(input$pw) == isolate(pw())) {
+    # read segments
+    get_segs <- BeastRServer::azure_blob_call("GET",
+                                              storage_account = "shinyapp",
+                                              storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
+                                                                   "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
+                                                                   "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
+                                              container = paste0("ms", input$study),
+                                              blob = "segments.csv")
+
+    segments <- as.data.table(httr::content(get_segs, type = "text/csv", encoding = "UTF-8"))
+
+    print("Segments read")
+
+    segments
+
+  }
+
+})
+
+# segment labels
+segDef <- eventReactive(input$go, {
+
+  validate(
+    need(!is.null(input$study), "Wait for it!")
+  )
+
+  if (isolate(input$pw) == isolate(pw())) {
+    # read segment labels
+    get_segDef <- BeastRServer::azure_blob_call("GET",
+                                                storage_account = "shinyapp",
+                                                storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
+                                                                     "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
+                                                                     "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
+                                                container = paste0("ms", input$study),
+                                                blob = "def_segments.def")
+
+    segDef <- strsplit(httr::content(get_segDef, as = "text", encoding = "UTF-8"), "\r\n")[[1]]
+    segDef
+  }
+
+})
+
+
 # # choices, combinations and ranks
 # comb <- eventReactive(input$go, {
 #
@@ -199,6 +254,44 @@ defIN <- reactive({
        nlev = nlev)
 
 })
+
+segDefIN <- reactive({
+
+  validate(
+    need(segDef(), "Wait for it!")
+  )
+
+  # segment info
+  segIndex <- grep("^[^ ]", segDef())
+
+  # indecies of levels
+  segLevIndex <- apply(cbind(segIndex + 1,
+                             c(segIndex[-1] - 1, length(segDef()))), 1,
+                       function(x) {seq(x[1], x[2])})
+
+
+  # named list of levels
+  segLev <- lapply(segLevIndex,
+                   function(x) {
+                     gsub("^[ ]", "", segDef()[x])
+                   })
+  names(segLev) <- segDef()[segIndex]
+
+  # number of levels
+  segCode <- sapply(segLev,
+                    function(x) {
+                      if (all(x == "") & length(x) == 1) {
+                        "numeric"
+                      } else {
+                        "factor"
+                      }
+                    })
+
+  list(segLev = segLev,
+       segCode = segCode,
+       segLevFact = segLev[segCode == "factor"])
+
+})
 # Definition data extracted !-----------------------------------------------------------------------------------------
 
 
@@ -217,6 +310,33 @@ defIN <- reactive({
 #        Data = Data)
 #
 # })
+
+segIN <- reactive({
+
+  validate(
+    need(segments(), "Wait for data!")
+  )
+
+  validate(
+    need(segDefIN(), "Wait for segment definitions!")
+  )
+
+  factorVars <- names(segments())[which(segDefIN()$segCode == "factor") + 1]
+  segFactor <- copy(segments()[, mget(c("ID", factorVars))])
+
+  segFactor[, (factorVars) := lapply(seq_along(.SD),
+                                     function(x) {
+                                       factor(.SD[[x]],
+                                              labels = segDefIN()$segLev[[which(segDefIN()$segCode == "factor")[x]]])
+                                     }),
+            .SDcols = factorVars]
+
+  segNumeric <- copy(segments()[, mget(c("ID", names(segments())[which(segDefIN()$segCode == "numeric") + 1]))])
+
+  list(segFactor = segFactor,
+       segNumeric = segNumeric)
+
+})
 
 # calculate importances and counts
 Importance <- reactive({
