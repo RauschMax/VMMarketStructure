@@ -6,6 +6,7 @@ library(KTShiny)
 library(formattable)
 library(networkD3)
 library(treemap)
+library(shinyWidgets)
 #Add all required packages here
 
 ####Active Directory####
@@ -126,9 +127,8 @@ ui <- kantarPage(
               div(style = "height:72vh; margin-bottom:10px;",
                   sankeyNetworkOutput("Sankey"))
             ), width = 12),
-        kantarBox(h4("Segment Selection"),
-                  uiOutput("selSegment"), width = 6),
-        kantarBox(h4("Level Selection"), width = 6)
+        kantarBox(uiOutput("selSegment"), br(), width = 6),
+        kantarBox(uiOutput("selLevel"), br(), width = 6)
 
         # style = "overflow-y:scroll; overflow-x:auto; height:15vh;",
 

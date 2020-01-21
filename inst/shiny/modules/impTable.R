@@ -68,7 +68,64 @@ output$selSegment <- shiny::renderUI({
 
   names(choList) <- names(segDefIN()$segLevFact)
 
-  shiny::selectizeInput('segs', 'Select Subgroup', choices = choList, multiple = TRUE)
+  # shiny::selectizeInput('segs', 'Select Subgroup', choices = choList, multiple = TRUE,
+  #                       options = list(dropdownParent = 'body'))
+
+  shinyWidgets::pickerInput(
+    inputId = "segs",
+    label = "Select Subgroup",
+    choices = choList,
+    multiple = TRUE,
+    width = "100%",
+    options = list(
+      'live-search' = TRUE,
+      'live-search-placeholder' = "Search for segment...",
+      'actions-box' = TRUE,
+      'deselect-all-text' = "Remove Selection",
+      'none-selected-text' = "Total",
+      'multiple-separator' = " | ",
+      size = 10
+    )
+  )
+
+})
+
+output$selLevel <- shiny::renderUI({
+
+  validate(
+    need(segDefIN(), "Please load the data.")
+  )
+
+  nLevs <- length(defIN()$attLev)
+
+  choList <- lapply(seq_along(defIN()$attLev),
+                    function(x) {
+                      vec <- paste0(x, "_", seq_along(defIN()$attLev[[x]]))
+                      names(vec) <- defIN()$attLev[[x]]
+                      vec
+                    })
+
+  names(choList) <- names(defIN()$attLev)
+
+  # shiny::selectizeInput('levels', 'Select Levels', choices = choList, multiple = TRUE,
+  #                       options = list(dropdownParent = 'body'))
+
+  shinyWidgets::pickerInput(
+    inputId = "levels",
+    label = "Select Levels",
+    choices = choList,
+    multiple = TRUE,
+    width = "100%",
+    options = list(
+      'live-search' = TRUE,
+      'live-search-placeholder' = "Search for level...",
+      'actions-box' = TRUE,
+      'deselect-all-text' = "Remove Selection",
+      'none-selected-text' = "No Selection",
+      'multiple-separator' = " | ",
+      size = 10
+    )
+  )
 
 })
 
