@@ -46,7 +46,7 @@ def <- eventReactive(input$go, {
 })
 
 # choices, combinations and ranks
-data <- eventReactive(input$go, {
+dataIN <- eventReactive(input$go, {
 
   validate(
     need(input$study, "Wait for it!")
@@ -70,6 +70,17 @@ data <- eventReactive(input$go, {
     print("data read")
     data
   }
+
+})
+
+# chosen Subgroup
+dataUSED <- reactive({
+
+  validate(
+    need(length(chosenIDs()) > 10, "Base size too small!")
+  )
+
+  dataIN()[ID %in% chosenIDs(), ]
 
 })
 
@@ -342,12 +353,12 @@ segIN <- reactive({
 Importance <- reactive({
 
   validate(
-    need(data(), "Wait for data!")
+    need(dataIN(), "Wait for data!")
   )
 
   # Alternative Importance calculation !----------------------------------------------------------------------------------
 
-  Data <- data()
+  Data <- dataUSED()
 
   Data_Weighted <- copy(Data)
   for (i in 1:length(defIN()$nlev)) {
@@ -401,9 +412,9 @@ Importance <- reactive({
   # Level counts - 100% within attributes
   LevelCounts_100 <- lapply(paste0("^A", 1:length(defIN()$nlev), "_"),
                             function(y) {
-                              out <- apply(data()[, grep(y, x = names(data())),
+                              out <- apply(dataUSED()[, grep(y, x = names(dataUSED())),
                                                   with = FALSE], 2, sum) /
-                                sum(apply(data()[, grep(y, x = names(data())),
+                                sum(apply(dataUSED()[, grep(y, x = names(dataUSED())),
                                                  with = FALSE], 2, sum))
 
                               names(out) <- defIN()$attLev[[y]]
@@ -414,11 +425,11 @@ Importance <- reactive({
   # Level counts - summing to attribute importance within attributes
   LevelCounts_rel <- lapply(1:length(defIN()$nlev),
                             function(y) {
-                              out <- apply(data()[, grep(paste0("^A", y, "_"),
-                                                         x = names(data())),
+                              out <- apply(dataUSED()[, grep(paste0("^A", y, "_"),
+                                                         x = names(dataUSED())),
                                                   with = FALSE], 2, sum) /
-                                sum(apply(data()[, grep(paste0("^A", y, "_"),
-                                                        x = names(data())),
+                                sum(apply(dataUSED()[, grep(paste0("^A", y, "_"),
+                                                        x = names(dataUSED())),
                                                  with = FALSE], 2, sum)) * Importance[y]
 
                               names(out) <- defIN()$attLev[[y]]
@@ -472,9 +483,9 @@ Imp_ordered <- reactive({
 SKU_choice_DT <- reactive({
   # Alternative SKU_choice_DT !-------------------------------------------------------------------------------------------
   # NA --> 0 instead of expand.grid(x)
-  SKU_choice_2 <- lapply(data()$ID,
+  SKU_choice_2 <- lapply(dataUSED()$ID,
                          function(x) {
-                           dataHelp <- data()[data()$ID == x, grep("^A", names(data())), with = FALSE]
+                           dataHelp <- dataUSED()[dataUSED()$ID == x, grep("^A", names(dataUSED())), with = FALSE]
 
                            chosenLevels <- lapply(1:length(defIN()$nlev),
                                                   function(y) {

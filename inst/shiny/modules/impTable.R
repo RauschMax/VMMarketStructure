@@ -100,7 +100,7 @@ output$selLevel <- shiny::renderUI({
 
   choList <- lapply(seq_along(defIN()$attLev),
                     function(x) {
-                      vec <- paste0(x, "_", seq_along(defIN()$attLev[[x]]))
+                      vec <- paste0("A", x, "_", seq_along(defIN()$attLev[[x]]))
                       names(vec) <- defIN()$attLev[[x]]
                       vec
                     })
@@ -126,6 +126,77 @@ output$selLevel <- shiny::renderUI({
       size = 10
     )
   )
+
+})
+
+chosenIDs <- reactive({
+
+  if (is.null(input$segs) & is.null(input$levels)) {
+    chosenIDs <- dataIN()[, ID]
+  } else {
+    # Segment Selection
+    if (is.null(input$segs)) {
+      validSegSel <- rep(TRUE, nrow(dataIN()))
+    } else {
+      segChosen <- lapply(seq_along(segDefIN()$segLevFact),
+                          function(x) {
+                            if (length(grep(paste0(x, "_"), input$segs)) > 0) {
+                              # input$segs[grep(paste0(x, "_"), input$segs)]
+                              sapply(strsplit(input$segs[grep(paste0(x, "_"), input$segs)], "_"),
+                                     function(y) {
+                                       segDefIN()$segLevFact[[x]][as.numeric(y[2])]
+                                     })
+                            }
+                          })
+      names(segChosen) <- names(segIN()$segFactor)[-1]
+
+      segSelectionList <- lapply(names(segChosen),
+                                 function(x) {
+                                   if (is.null(segChosen[[x]])) {
+                                     NULL
+                                   } else {
+                                     # segIN$segFactor[get(x) %in% segChosen[[x]], ID]
+
+                                     segIN()$segFactor[, get(x)] %in% segChosen[[x]]
+                                   }
+                                 })
+
+      validSegSel <- rowSums(Reduce(cbind, segSelectionList)) > 0
+    }
+
+    # Level Selection
+    if (is.null(input$levels)) {
+      validLevelSel <- rep(TRUE, nrow(dataIN()))
+    } else {
+      levelsChosen <- lapply(seq_along(nlev),
+                             function(x) {
+                               if (length(grep(paste0("A", x), input$levels)) > 0) {
+                                 input$levels[grep(paste0("A", x), input$levels)]
+                               } else {
+                                 NULL
+                               }
+                             })
+
+      LevSelectionList <- lapply(levelsChosen,
+                                 function(x) {
+                                   if (is.null(x)) {
+                                     NULL
+                                   } else {
+                                     rowSums(dataIN()[, mget(x)]) > 0
+                                   }
+                                 })
+
+      validLevelSel <- rowSums(Reduce(cbind, LevSelectionList)) > 0
+    }
+
+    # Combine Level AND Segment Selection
+    validSel <- validLevelSel & validSegSel
+
+    chosenIDs <- dataIN()[validSel, ID]
+
+  }
+
+  chosenIDs
 
 })
 

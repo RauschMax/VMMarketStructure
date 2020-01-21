@@ -498,13 +498,78 @@ lapply(seq_along(Imp_ordered$LevCount),
        })
 
 
+# Segment Selection
 input$segs <- c("1_1", "1_2", "2_2")
 
-input$levels <- c("2_1", "2_2", "2_3")
+strsplit(input$segs[3], "_")
 
-segments
+segDefIN$segLevFact
+
+segChosen <- lapply(seq_along(segDefIN$segLevFact),
+                    function(x) {
+                      if (length(grep(paste0(x, "_"), input$segs)) > 0) {
+                        # input$segs[grep(paste0(x, "_"), input$segs)]
+                        sapply(strsplit(input$segs[grep(paste0(x, "_"), input$segs)], "_"),
+                               function(y) {
+                                 segDefIN$segLevFact[[x]][as.numeric(y[2])]
+                               })
+                      }
+                    })
+names(segChosen) <- names(segIN$segFactor)[-1]
+
+segIN$segFactor[zzAge %in% segChosen[[1]]]
+
+segSelectionList <- lapply(names(segChosen),
+                        function(x) {
+                          if (is.null(segChosen[[x]])) {
+                            NULL
+                          } else {
+                            # segIN$segFactor[get(x) %in% segChosen[[x]], ID]
+
+                            segIN$segFactor[, get(x)] %in% segChosen[[x]]
+                          }
+                        })
+
+validSegSel <- rowSums(Reduce(cbind, segSelectionList)) > 0
+
+chosenIDsSeg <- Data[validSegSel, ID]
+
+Data[ID %in% chosenIDsSeg, ]
 
 
+# Level Selection
+input$levels <- c("A1_2", "A2_1", "A2_2", "A2_3")
 
-Data
+levelsChosen <- lapply(seq_along(nlev),
+                       function(x) {
+                         if (length(grep(paste0("A", x), input$levels)) > 0) {
+                           input$levels[grep(paste0("A", x), input$levels)]
+                         } else {
+                           NULL
+                         }
+                       })
 
+LevSelectionList <- lapply(levelsChosen,
+                        function(x) {
+                          if (is.null(x)) {
+                            NULL
+                          } else {
+                            rowSums(Data[, mget(x)]) > 0
+                          }
+                        })
+
+validLevelSel <- rowSums(Reduce(cbind, LevSelectionList)) > 0
+
+
+chosenIDsLev <- Data[rowSums(Reduce(cbind, LevSelectionList)) > 0, ID]
+
+Data[ID %in% chosenIDsLev, ]
+
+
+# Combine Level AND Segment Selection
+
+validSel <- validLevelSel & validSegSel
+
+chosenIDs <- Data[validSel, ID]
+
+Data[ID %in% chosenIDs, ]
