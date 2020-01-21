@@ -44,7 +44,7 @@ output$decMatUI <- renderUI({
            div(style = "font-size: 10px; width:99%",
                h6(div(style = "font-weight:bold; display:inline-block;", toupper(names(Imp_ordered()$LevCount)[x])),
                   ": ",
-                  round(Imp_ordered()$Imp[x], 3) * 100),
+                  format(round(Imp_ordered()$Imp[x], 3) * 100, nsmall = 1)),
                DT::dataTableOutput(id)
            )
          })

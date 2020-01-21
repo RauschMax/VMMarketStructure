@@ -128,7 +128,8 @@ ui <- kantarPage(
                   sankeyNetworkOutput("Sankey"))
             ), width = 12),
         kantarBox(uiOutput("selSegment"), br(), width = 6),
-        kantarBox(uiOutput("selLevel"), br(), width = 6)
+        kantarBox(uiOutput("selLevel"), br(), width = 6),
+        verbatimTextOutput("testDecHier")
 
         # style = "overflow-y:scroll; overflow-x:auto; height:15vh;",
 

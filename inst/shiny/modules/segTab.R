@@ -5,7 +5,7 @@ segSankeyData <- reactive({
   )
 
   ## Sankey - LC Runs
-  Help_LC_Sankey_1 <- copy(lc_segs())
+  Help_LC_Sankey_1 <- copy(lc_segs())[, mget(paste0("LC" , 2:10))]
 
   for (i in 3:(ncol(Help_LC_Sankey_1) + 1)) {
     sel1 <- paste0("LC", i)
@@ -80,8 +80,8 @@ output$segTable <- DT::renderDataTable({
 })
 
 output$segSelectUI <- shiny::renderUI({
-  choList <- as.list(seq_along(names(lc_segs())) + 1)
-  names(choList) <- paste(names(lc_segs()), "-", choList, "group solution")
+  choList <- as.list(seq_along(names(lc_segs())[-1]) + 1)
+  names(choList) <- paste(names(lc_segs())[-1], "-", choList, "group solution")
 
   div(h4("Select a segment solution"),
       shiny::selectInput("segSelect", label = NULL,

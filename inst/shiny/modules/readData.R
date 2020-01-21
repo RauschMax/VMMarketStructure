@@ -443,29 +443,29 @@ Imp_ordered <- reactive({
   orderAtt <-  order(Importance()$Importance,
                      decreasing = TRUE)
 
-  attLev_ordered <- defIN()$attLev[orderAtt]
-  nlev_ordered <- defIN()$nlev[orderAtt]
+  attLev_ordered <- defIN()$attLev
 
   optOrder <- orderIN()
 
   LevelCounts_100_ordered <- lapply(seq_along(optOrder),
                                     function(x) {
-                                      out <- Importance()$LevelCounts_100[orderAtt][[x]][optOrder[[x]]]
+                                      out <- Importance()$LevelCounts_100[[x]][optOrder[[x]]]
                                       names(out) <- attLev_ordered[[x]][optOrder[[x]]]
                                       out
                                     })
 
   names(LevelCounts_100_ordered) <- names(attLev_ordered)
 
+  LevelCounts_100_ordered <- LevelCounts_100_ordered[orderAtt]
+
   attLev_ordered <- lapply(seq_along(attLev_ordered),
                            function(k) {
                              attLev_ordered[[k]][optOrder[[k]]]
-                           })
+                           })[orderAtt]
 
   list(Imp = Importance()$Importance[orderAtt],
        LevCount = LevelCounts_100_ordered,
        attLev_ordered = attLev_ordered)
-
 
 })
 

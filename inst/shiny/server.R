@@ -86,7 +86,15 @@ server <- function(input, output, session) {
 
   output$test2 <- renderPrint({
 
-    segDefIN()
+    data()
+
+
+  })
+
+  output$testDecHier <- renderPrint({
+
+    list(input$segs,
+         input$levels)
 
 
   })
