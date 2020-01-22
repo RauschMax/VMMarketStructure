@@ -7,6 +7,8 @@ library(formattable)
 library(networkD3)
 library(treemap)
 library(shinyWidgets)
+library(ggplot2)
+library(gridExtra)
 #Add all required packages here
 
 ####Active Directory####
@@ -95,7 +97,11 @@ ui <- kantarPage(
                          margin-right: 20px;
                          float: right;}
               .row {margin-right: 0;
-                    margin-left: -15px;}"
+                    margin-left: -15px;}
+              .nav-pills > li[class=active] > a:focus {background-color: lightgrey;
+                                                       color: black}
+              .nav-pills > li[class=active] > a {background-color: lightgrey;
+                                                 color: black}"
         ))),
 
 
@@ -127,8 +133,9 @@ ui <- kantarPage(
               div(style = "height:72vh; margin-bottom:10px;",
                   sankeyNetworkOutput("Sankey"))
             ), width = 12),
-        kantarBox(uiOutput("selSegment"), br(), width = 6),
-        kantarBox(uiOutput("selLevel"), br(), width = 6),
+        kantarBox(uiOutput("selSegment"), br(), width = 5),
+        kantarBox(uiOutput("selLevel"), br(), width = 5),
+        valueBoxOutput("selectionSizeBox", width = 2),
         verbatimTextOutput("testDecHier")
 
         # style = "overflow-y:scroll; overflow-x:auto; height:15vh;",
@@ -150,25 +157,48 @@ ui <- kantarPage(
 
       tabItem(
         tabName = 'buyseg',
-        tabBox(
-          tabPanel(
-            title = 'Select Segment Solution',
-            column(kantarBox(width = 12,
-                             sankeyNetworkOutput("SankeyLC")),
-                   kantarBox(width = 12,
-                             uiOutput("segSelectUI")),
-                   width = 8),
-            column(div(style = "overflow-y: scroll; height:80vh; font-size:80%;",
-                                 DT::dataTableOutput("segTable")),
-                   width = 4)
-          ),
+        tabsetPanel(
+          # dropdownButton(
+          #
+          #   tags$h3("List of Inputs"),
+          #
+          #   uiOutput("segSelectUI"),
+          #
+          #   circle = TRUE, status = "danger",
+          #   icon = icon("gear"), width = "300px",
+          #
+          #   tooltip = tooltipOptions(title = "Click to select segmentation!")
+          # ),
           tabPanel(
             title = 'Segment Profile',
-            "Segment Profile"),
+            navlistPanel(
+              "Select Profile Variables...",
+              tabPanel("Factor Variables", kantarBox(div(style = "height:70vh;",
+                                             plotOutput("profileFactors",
+                                                        height = "100%")),
+                                             width = 12)),
+              tabPanel("Numeric Variables", kantarBox(div(style = "height:80vh;",
+                                                plotOutput("profileNumeric",
+                                                           height = "100%")),
+                                                width = 12)),
+              tabPanel("Choices", "Choices"),
+              well = FALSE, widths = c(2, 10), id = "SegNavList")),
           tabPanel(
             title = 'Personas',
             "Segment Personas"),
-          width = 12)
+          tabPanel(
+              title = 'Select Segment Solution',
+              column(kantarBox(width = 12,
+                               sankeyNetworkOutput("SankeyLC")),
+                     kantarBox(width = 12,
+                               uiOutput("segSelectUI")
+                               ),
+                     width = 8),
+              column(div(style = "overflow-y: scroll; height:80vh; font-size:80%;",
+                         DT::dataTableOutput("segTable")),
+                     width = 4)
+            ))
+        # , verbatimTextOutput("testSegTab")
       ),
 
 

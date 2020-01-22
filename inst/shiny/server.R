@@ -86,7 +86,8 @@ server <- function(input, output, session) {
 
   output$test2 <- renderPrint({
 
-    dataUSED()
+    list(dataUSED(),
+         selectionSize())
 
   })
 

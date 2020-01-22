@@ -168,7 +168,7 @@ chosenIDs <- reactive({
     if (is.null(input$levels)) {
       validLevelSel <- rep(TRUE, nrow(dataIN()))
     } else {
-      levelsChosen <- lapply(seq_along(nlev),
+      levelsChosen <- lapply(seq_along(defIN()$nlev),
                              function(x) {
                                if (length(grep(paste0("A", x), input$levels)) > 0) {
                                  input$levels[grep(paste0("A", x), input$levels)]
@@ -200,6 +200,18 @@ chosenIDs <- reactive({
 
 })
 
+selectionSize <- reactive({
+  length(chosenIDs())
+})
+
+output$selectionSizeBox <- renderValueBox({
+
+  valueBox(value = selectionSize(),
+           subtitle = "base",
+           color = "teal",
+           icon = icon("users"))
+})
+
 # output$selComb <- renderUI({
 #
 #   tags$table(style = "font-size:10px; width:100%;",
@@ -218,9 +230,3 @@ chosenIDs <- reactive({
 #   )
 #
 # })
-
-output$test2 <- renderPrint({
-
-  orderIN()
-
-})

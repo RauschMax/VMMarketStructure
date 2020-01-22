@@ -11,6 +11,7 @@ library(DT)
 library(formattable)
 library(networkD3)
 library(treemap)
+library(ggplot2)
 #Add all required packages here
 
 input <- list(study = "316401010")
@@ -573,3 +574,166 @@ validSel <- validLevelSel & validSegSel
 chosenIDs <- Data[validSel, ID]
 
 Data[ID %in% chosenIDs, ]
+
+## !--------------------------------------------------------------------------------------------------------------------
+## END Code "ImpTable.R !-----------------------------------------------------------------------------------------------
+## !--------------------------------------------------------------------------------------------------------------------
+
+## !--------------------------------------------------------------------------------------------------------------------
+## START Code "segTab.R !-----------------------------------------------------------------------------------------------
+## !--------------------------------------------------------------------------------------------------------------------
+
+input$segSelect <- "4"
+
+LCselected <- paste0("LC", input$segSelect)
+
+table(lc_segs[, get(LCselected)])
+
+segIN$segFactor
+
+# barcharts for factors
+ceiling((length(names(segIN$segFactor)) - 1)/2)
+
+par(mfrow = c(3, 2), mar = c(10, 4, 4, 2), oma = c(3, 0, 0, 0))
+lapply(segIN$segFactor[lc_segs[, get(LCselected)] == 1, mget(names(segIN$segFactor)[-1])],
+       plot, las = 2, cex.lab = .5)
+
+lapply(segIN$segNumeric[lc_segs[, get(LCselected)] == 1, mget(names(segIN$segNumeric)[-1])],
+       hist, freq = TRUE, xlab = NULL, main = NULL, col = "darkgrey")
+
+
+
+
+
+# ggplot option
+
+segsInclLC <- segIN$segFactor[lc_segs, on = "ID"]
+plotData <- segsInclLC[, mget(c(names(segIN$segFactor)[2], LCselected))]
+plotData <- plotData[, .N, by = mget(c(names(segIN$segFactor)[2], LCselected))][order(get(names(segIN$segFactor)[2]),
+                                                                                      get(LCselected))]
+
+plotData[, c(LCselected) := factor(get(LCselected))]
+
+plotData[, freq := N / sum(N) * 100, by = LCselected]
+
+names(plotData) <- c("group", "LC", "count", "freq")
+
+ggplot(plotData,
+       aes(fill = LC, y = freq, x = group)) +
+  geom_bar(position = "dodge", stat = "identity")
+
+
+library(lattice)
+barchart(freq ~ group, data = plotData, groups = LC,
+         scales = list(x = list(rot = 90, cex = 0.8)))
+
+
+barplotList <- lapply(names(segIN$segFactor)[-1],
+                      function(x) {
+                        plotData <- segsInclLC[, mget(c(x, LCselected))]
+                        plotData <- plotData[, .N, by = mget(c(x, LCselected))][order(get(names(plotData)[1]),
+                                                                                      get(LCselected))]
+
+                        plotData[, c(LCselected) := factor(get(LCselected))]
+
+                        plotData[, freq := N / sum(N) * 100, by = LCselected]
+
+                        names(plotData) <- c("group", "LC", "count", "freq")
+
+                        ggplot(plotData,
+                               aes(fill = LC, y = freq, x = group)) +
+                          geom_bar(position = "dodge", stat = "identity") +
+                          theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
+                                axis.title.x = element_text(size = 10)) +
+                          xlab(x) + ylab(NULL)
+
+                        # barchart(freq ~ group, data = plotData, groups = LC,
+                        #          scales = list(x = list(rot = 40, cex = 0.6)))
+                      })
+
+
+do.call(gridExtra::grid.arrange, c(barplotList, ncol = 2))
+
+
+segsInclLCNum <- segIN$segNumeric[lc_segs, on = "ID"]
+plotData2 <- segsInclLCNum[, mget(c(names(segIN$segNumeric)[-1], LCselected))]
+
+# segsInclLCNum[, hist2 := SC01 + rnorm(nrow(lc_segs), 2, 2)]
+# plotData2 <- segsInclLCNum[, mget(c("SC01", "hist2", LCselected))]
+
+plotData2[, c(LCselected) := factor(get(LCselected))]
+
+# plotData2[, freq := N / sum(N) * 100, by = LCselected]
+
+# names(plotData2) <- c("Age", "LC")
+
+
+plot_multi_histogram <- function(df, feature, label_column) {
+  plt <- ggplot(df, aes(x = eval(parse(text = feature)), fill = eval(parse(text = label_column)))) +
+    geom_histogram(alpha = 0.7, position = "identity", aes(y  =  ..density..),
+                   color = "black", bins = 15) +
+    geom_density(alpha = 0.7) +
+    geom_vline(aes(xintercept = mean(eval(parse(text = feature)))), color = "black", linetype = "dashed", size = 1) +
+    labs(x = feature, y  =  "Density")
+  plt + guides(fill = guide_legend(title = label_column))
+}
+# plot_multi_histogram(plotData2, "SC01", "LC4")
+
+histList <- lapply(names(plotData2)[1],
+                   function(x) {
+                     plot_multi_histogram(plotData2, x, "LC4")
+                   })
+
+do.call(gridExtra::grid.arrange, c(histList, ncol = min(2, ceiling((length(names(segIN$segNumeric)) - 1)/2))))
+
+
+# Choices
+dataLC <- Data[lc_segs, on = "ID"]
+
+plotDataCho <- dataLC[, mget(c(paste0("A", 2, "_", sequence(defIN$nlev[2])), LCselected))]
+
+plotDataCho <- plotDataCho[, colSums(.SD), .SDcols = paste0("A", 2, "_", sequence(nlev[2])), by = "LC4"]
+
+
+plotDataCho[, c(LCselected) := factor(get(LCselected))]
+plotDataCho[, freq := V1 / sum(V1) * 100, by = LCselected]
+plotDataCho[, group := defIN$attLev[[2]]]
+
+
+names(plotDataCho) <- c("LC", "count", "freq", "group")
+
+ggplot(plotDataCho,
+       aes(fill = LC, y = freq, x = group)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
+        axis.title.x = element_text(size = 10))
+
+
+barplotListCho <- lapply(seq_along(defIN$attLev),
+                      function(x) {
+                        plotDataCho <- dataLC[, mget(c(paste0("A", x, "_", sequence(defIN$nlev[x])), LCselected))]
+
+                        plotDataCho <- plotDataCho[, colSums(.SD),
+                                                   .SDcols = paste0("A", x, "_", sequence(defIN$nlev[x])),
+                                                   by = LCselected]
+
+
+                        plotDataCho[, c(LCselected) := factor(get(LCselected))]
+                        plotDataCho[, freq := V1 / sum(V1) * 100, by = LCselected]
+                        plotDataCho[, group := defIN$attLev[[x]]]
+
+                        names(plotDataCho) <- c("LC", "count", "freq", "group")
+
+                        ggplot(plotDataCho,
+                               aes(fill = LC, y = freq, x = group)) +
+                          geom_bar(position = "dodge", stat = "identity") +
+                          theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
+                                axis.title.x = element_text(size = 10)) +
+                          xlab(names()[x]) + ylab(NULL)
+
+                        # barchart(freq ~ group, data = plotData, groups = LC,
+                        #          scales = list(x = list(rot = 40, cex = 0.6)))
+                      })
+
+
+do.call(gridExtra::grid.arrange, c(barplotListCho, nrow = 2))
