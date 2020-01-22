@@ -73,8 +73,9 @@ ui <- kantarPage(
     menuItem(tabName = 'home', text = 'Overview', icon = icon('eye'), selected = TRUE),
     menuItem(tabName = 'decision', text = 'Decision Hierarchy', icon = icon('sort-amount-desc')),
     menuItem(tabName = 'buyseg', text = 'Segmentation of Buyers', icon = icon('users')),
-    menuItem(tabName = 'demand', text = 'Demand & Substitution', icon = icon('shopping-basket')),
-    menuItem(tabName = 'portfolio', text = 'Portfolio Rankings', icon = icon('trophy'))
+    menuItem(tabName = 'demand', text = 'Demand & Substitution', icon = icon('shopping-basket'))
+    # ,
+    # menuItem(tabName = 'portfolio', text = 'Portfolio Rankings', icon = icon('trophy'))
   ),
 
   ####Body####
@@ -181,7 +182,10 @@ ui <- kantarPage(
                                                 plotOutput("profileNumeric",
                                                            height = "100%")),
                                                 width = 12)),
-              tabPanel("Choices", "Choices"),
+              tabPanel("Choices", kantarBox(div(style = "height:80vh;",
+                                                plotOutput("profileChoices",
+                                                           height = "100%")),
+                                            width = 12)),
               well = FALSE, widths = c(2, 10), id = "SegNavList")),
           tabPanel(
             title = 'Personas',

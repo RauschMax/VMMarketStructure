@@ -166,6 +166,49 @@ output$profileNumeric <- renderPlot({
 })
 
 
+output$profileChoices <- renderPlot({
+  if (is.null(input$segSelect)) {
+    LCselected <- paste0("LC", 4)
+  } else {
+    LCselected <- paste0("LC", input$segSelect)
+  }
+
+  dataLC <- dataIN()[lc_segs(), on = "ID"]
+
+  barplotListCho <- lapply(seq_along(defIN()$attLev),
+                           function(x) {
+                             plotDataCho <- dataLC[, mget(c(paste0("A", x, "_",
+                                                                   sequence(defIN()$nlev[x])), LCselected))]
+
+                             plotDataCho <- plotDataCho[, colSums(.SD),
+                                                        .SDcols = paste0("A", x, "_",
+                                                                         sequence(defIN()$nlev[x])),
+                                                        by = LCselected]
+
+
+                             plotDataCho[, c(LCselected) := factor(get(LCselected))]
+                             plotDataCho[, freq := V1 / sum(V1) * 100, by = LCselected]
+                             plotDataCho[, group := defIN()$attLev[[x]]]
+
+                             names(plotDataCho) <- c("LC", "count", "freq", "group")
+
+                             ggplot(plotDataCho,
+                                    aes(fill = LC, y = freq, x = group)) +
+                               geom_bar(position = "dodge", stat = "identity") +
+                               theme(axis.text.x = element_text(angle =30, hjust = 1, size = 8),
+                                     axis.title.x = element_text(size = 10)) +
+                               xlab(names(defIN()$nlev)[x]) + ylab(NULL)
+
+                             # barchart(freq ~ group, data = plotData, groups = LC,
+                             #          scales = list(x = list(rot = 40, cex = 0.6)))
+                           })
+
+
+  do.call(gridExtra::grid.arrange, c(barplotListCho, nrow = 2))
+
+})
+
+
 output$testSegTab <- renderPrint({
 
   input$segSelect
