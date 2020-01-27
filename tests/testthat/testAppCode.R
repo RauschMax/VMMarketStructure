@@ -460,7 +460,7 @@ SKU_choice_2 <- lapply(Data$ID,
                                                   }
                                                 })
 
-                         out <- data.frame(ID = x, expand.grid(chosenLevels))
+                         out <- data.table(ID = x, expand.grid(chosenLevels))
                          names(out) <- c("ID", paste0("Att", 1:length(defIN$nlev)))
 
                          out$Comb <- gsub("NA", "_", apply(out[, -1], 1,
@@ -591,15 +591,15 @@ table(lc_segs[, get(LCselected)])
 
 segIN$segFactor
 
-# barcharts for factors
-ceiling((length(names(segIN$segFactor)) - 1)/2)
-
-par(mfrow = c(3, 2), mar = c(10, 4, 4, 2), oma = c(3, 0, 0, 0))
-lapply(segIN$segFactor[lc_segs[, get(LCselected)] == 1, mget(names(segIN$segFactor)[-1])],
-       plot, las = 2, cex.lab = .5)
-
-lapply(segIN$segNumeric[lc_segs[, get(LCselected)] == 1, mget(names(segIN$segNumeric)[-1])],
-       hist, freq = TRUE, xlab = NULL, main = NULL, col = "darkgrey")
+# # barcharts for factors
+# ceiling((length(names(segIN$segFactor)) - 1)/2)
+#
+# par(mfrow = c(3, 2), mar = c(10, 4, 4, 2), oma = c(3, 0, 0, 0))
+# lapply(segIN$segFactor[lc_segs[, get(LCselected)] == 1, mget(names(segIN$segFactor)[-1])],
+#        plot, las = 2, cex.lab = .5)
+#
+# lapply(segIN$segNumeric[lc_segs[, get(LCselected)] == 1, mget(names(segIN$segNumeric)[-1])],
+#        hist, freq = TRUE, xlab = NULL, main = NULL, col = "darkgrey")
 
 
 
@@ -608,24 +608,24 @@ lapply(segIN$segNumeric[lc_segs[, get(LCselected)] == 1, mget(names(segIN$segNum
 # ggplot option
 
 segsInclLC <- segIN$segFactor[lc_segs, on = "ID"]
-plotData <- segsInclLC[, mget(c(names(segIN$segFactor)[2], LCselected))]
-plotData <- plotData[, .N, by = mget(c(names(segIN$segFactor)[2], LCselected))][order(get(names(segIN$segFactor)[2]),
-                                                                                      get(LCselected))]
+# plotData <- segsInclLC[, mget(c(names(segIN$segFactor)[2], LCselected))]
+# plotData <- plotData[, .N, by = mget(c(names(segIN$segFactor)[2], LCselected))][order(get(names(segIN$segFactor)[2]),
+#                                                                                       get(LCselected))]
+#
+# plotData[, c(LCselected) := factor(get(LCselected))]
+#
+# plotData[, freq := N / sum(N) * 100, by = LCselected]
+#
+# names(plotData) <- c("group", "LC", "count", "freq")
+#
+# ggplot(plotData,
+#        aes(fill = LC, y = freq, x = group)) +
+#   geom_bar(position = "dodge", stat = "identity")
 
-plotData[, c(LCselected) := factor(get(LCselected))]
 
-plotData[, freq := N / sum(N) * 100, by = LCselected]
-
-names(plotData) <- c("group", "LC", "count", "freq")
-
-ggplot(plotData,
-       aes(fill = LC, y = freq, x = group)) +
-  geom_bar(position = "dodge", stat = "identity")
-
-
-library(lattice)
-barchart(freq ~ group, data = plotData, groups = LC,
-         scales = list(x = list(rot = 90, cex = 0.8)))
+# library(lattice)
+# barchart(freq ~ group, data = plotData, groups = LC,
+#          scales = list(x = list(rot = 90, cex = 0.8)))
 
 
 barplotList <- lapply(names(segIN$segFactor)[-1],
@@ -690,23 +690,23 @@ do.call(gridExtra::grid.arrange, c(histList, ncol = min(2, ceiling((length(names
 # Choices
 dataLC <- Data[lc_segs, on = "ID"]
 
-plotDataCho <- dataLC[, mget(c(paste0("A", 2, "_", sequence(defIN$nlev[2])), LCselected))]
-
-plotDataCho <- plotDataCho[, colSums(.SD), .SDcols = paste0("A", 2, "_", sequence(nlev[2])), by = "LC4"]
-
-
-plotDataCho[, c(LCselected) := factor(get(LCselected))]
-plotDataCho[, freq := V1 / sum(V1) * 100, by = LCselected]
-plotDataCho[, group := defIN$attLev[[2]]]
-
-
-names(plotDataCho) <- c("LC", "count", "freq", "group")
-
-ggplot(plotDataCho,
-       aes(fill = LC, y = freq, x = group)) +
-  geom_bar(position = "dodge", stat = "identity") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
-        axis.title.x = element_text(size = 10))
+# plotDataCho <- dataLC[, mget(c(paste0("A", 2, "_", sequence(defIN$nlev[2])), LCselected))]
+#
+# plotDataCho <- plotDataCho[, colSums(.SD), .SDcols = paste0("A", 2, "_", sequence(nlev[2])), by = "LC4"]
+#
+#
+# plotDataCho[, c(LCselected) := factor(get(LCselected))]
+# plotDataCho[, freq := V1 / sum(V1) * 100, by = LCselected]
+# plotDataCho[, group := defIN$attLev[[2]]]
+#
+#
+# names(plotDataCho) <- c("LC", "count", "freq", "group")
+#
+# ggplot(plotDataCho,
+#        aes(fill = LC, y = freq, x = group)) +
+#   geom_bar(position = "dodge", stat = "identity") +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
+#         axis.title.x = element_text(size = 10))
 
 
 barplotListCho <- lapply(seq_along(defIN$attLev),
@@ -729,7 +729,7 @@ barplotListCho <- lapply(seq_along(defIN$attLev),
                           geom_bar(position = "dodge", stat = "identity") +
                           theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
                                 axis.title.x = element_text(size = 10)) +
-                          xlab(names()[x]) + ylab(NULL)
+                          xlab(names(defIN$nlev)[x]) + ylab(NULL)
 
                         # barchart(freq ~ group, data = plotData, groups = LC,
                         #          scales = list(x = list(rot = 40, cex = 0.6)))
@@ -737,3 +737,139 @@ barplotListCho <- lapply(seq_along(defIN$attLev),
 
 
 do.call(gridExtra::grid.arrange, c(barplotListCho, nrow = 2))
+
+
+# Demand & Substitution !-----------------------------------------------------------------------------------------------
+
+SKU_choice_2[[2]][, mget(paste0("Att", 1:length(nlev)))]
+
+Importance$Importance * (sapply(SKU_choice_2[[1]][, mget(paste0("Att", 1:length(nlev)))],
+                     max) != 0)
+
+str(SKU_choice_2[[1]])
+
+names(SKU_choice_2[[1]])
+SKU_choice_2[[1]][, "Att1"]
+
+DemandList <- lapply(SKU_choice_2,
+                     function(i) {
+                       Importance_scaled <- Importance$Importance * (sapply(i[, mget(paste0("Att", 1:length(nlev)))],
+                                                                            max) != 0)
+
+                       Importance_scaled <- Importance_scaled / sum(Importance_scaled)
+
+
+                       IndChoHelp <- lapply(seq_along(nlev),
+                                            function(x) {
+                                              (tabulate(i[, get(paste0("Att", x))],
+                                                        nbins = nlev[x]) != 0) * Importance_scaled[x]
+                                            })
+
+                       helpInd <- sapply(IndChoHelp,
+                                         function(x) {
+                                           out <- which(x != 0)
+
+                                           if (length(out) > 0) {
+                                             c(0, out)
+                                           } else {
+                                             NA
+                                           }
+                                         })
+
+                       if (length(unique(i[, ID])) != 1) {break}
+
+                       help_DT <- data.table(ID = i[1, ID],
+                                             expand.grid(helpInd))
+
+                       help_DT[, c(paste0("Val", seq_along(nlev))) := lapply(seq_along(nlev),
+                                                                             function(x) {
+                                                                               varIter <- .SD[[x]]
+                                                                               sapply(varIter,
+                                                                                      function(y) {
+                                                                                        if (any(is.na(y))) {
+                                                                                          out <- NA
+                                                                                        } else {
+                                                                                          out <- IndChoHelp[[x]][y]
+                                                                                          if (length(out) > 0) {
+                                                                                            out
+                                                                                          } else {
+                                                                                            0
+                                                                                          }
+                                                                                        }
+                                                                                      })
+                                                                             }),
+                               .SDcols = paste0("Var", seq_along(nlev))]
+
+                       help_DT[, demand := rowSums(.SD, na.rm = TRUE), .SDcols = paste0("Val", seq_along(nlev))]
+
+                       help_DT
+                     })
+
+names(DemandList) <- Data[, ID]
+DemandList[1:5]
+DemandList[[1]]
+
+Demand_DT <- rbindlist(DemandList)[, mget(c("ID", paste0("Var", 1:length(nlev)), "demand"))]
+
+selectedLevels <- c(1, 1, 1, 1, 1, 1, 1, 1)
+
+selIndex <- DemandList[[1]][, rowSums(sapply(1:length(nlev),
+                         function(x) {
+                           .SD[[x]] %in% c(NA, 0, selectedLevels[x])
+                         })) == length(nlev), .SDcols = paste0("Var", 1:length(nlev))]
+
+DemandList[[1]][selIndex]
+
+demandAnalysis <- lapply(DemandList,
+                         function(x) {
+                           helpDT_in <- copy(x)
+                           helpDT_in[, c(paste0("Val", seq_along(nlev))) := NULL]
+
+                           selIndex <- helpDT_in[, rowSums(sapply(1:length(nlev),
+                                                                  function(x) {
+                                                                    .SD[[x]] %in% c(NA, 0, selectedLevels[x])
+                                                                  })) == length(nlev),
+                                                 .SDcols = paste0("Var", 1:length(nlev))]
+
+                           helpDT <- helpDT_in[selIndex]
+
+                           demandHelp <- max(helpDT[, demand])
+
+                           compHelp <- helpDT_in[demand > demandHelp]
+                           compHelp
+
+                           list(demand = demandHelp,
+                                DT = helpDT,
+                                competitors = compHelp,
+                                nComp = nrow(compHelp),
+                                nConcepts = nrow(helpDT_in))
+                         })
+names(demandAnalysis) <- Data[, ID]
+demandAnalysis[1:2]
+demandAnalysis[[2]]
+
+demandAnalysis[["10"]]
+
+mean(sapply(demandAnalysis,
+       function(x) {
+         x$demand
+       }))
+
+mean(sapply(demandAnalysis,
+            function(x) {
+              x$nComp
+            }))
+
+df_demand <- data.table(demand = sapply(demandAnalysis,
+                         function(x) {
+                           x$demand
+                         }))
+
+ggplot(df_demand, aes(x = demand)) +
+  geom_histogram(alpha = 0.7, position = "identity",
+                 aes(y  =  ..density..),
+                 color = "black", bins = 15) +
+  geom_density(alpha = .2, fill = "#FF6666") +
+  geom_vline(aes(xintercept = mean(demand)),
+             color = "blue", linetype = "dashed", size = 1)
+

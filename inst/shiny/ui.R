@@ -208,14 +208,21 @@ ui <- kantarPage(
 
       tabItem(
         tabName = 'demand',
-        column(kantarBox(valueBoxOutput("demandBox", width = 6),
-                         valueBoxOutput("compBox", width = 6),
-                         width = 12),
-               kantarBox("Substituion Matrix",
-                         width = 12),
-               width = 8),
-        kantarBox(uiOutput("attLev"),
-                  width = 4)
+        fluidRow(
+          column(kantarBox(valueBoxOutput("demandBox", width = 4),
+                           valueBoxOutput("compBox", width = 4),
+                           valueBoxOutput("uniquenessBox", width = 4),
+                           width = 12),
+                 kantarBox(plotOutput("demandHist"),
+                           title = "Demand Distribution",
+                           width = 12),
+                 width = 8),
+          column(kantarBox(uiOutput("attLev"),
+                           title = "Select a Product",
+                           width = 12),
+                 width = 4)
+        ),
+        fluidRow(verbatimTextOutput("testDemand"))
 
       ),
 

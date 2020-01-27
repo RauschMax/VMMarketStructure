@@ -499,7 +499,7 @@ SKU_choice_DT <- reactive({
                                                     }
                                                   })
 
-                           out <- data.frame(ID = x, expand.grid(chosenLevels))
+                           out <- data.table(ID = x, expand.grid(chosenLevels))
                            names(out) <- c("ID", paste0("Att", 1:length(defIN()$nlev)))
 
                            out$Comb <- gsub("NA", "_", apply(out[, -1], 1,
@@ -514,6 +514,9 @@ SKU_choice_DT <- reactive({
   SKU_choice_DT_ALTERNATIVE <- rbindlist(SKU_choice_2)
 
   SKU_choice_DT_ALTERNATIVE[order(ID)]
+
+  list(SKU_choice_DT = SKU_choice_DT_ALTERNATIVE,
+       SKU_choice = SKU_choice_2)
 
 })
 

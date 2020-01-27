@@ -60,7 +60,8 @@ server <- function(input, output, session) {
     nAttr <- length(defIN()$nlev)
     lapply(1:(nAttr),
            function(i) {
-             choList <- as.list(defIN()$attLev[[i]])
+             choList <- as.list(seq_along(defIN()$attLev[[i]]))
+             names(choList) <- defIN()$attLev[[i]]
              selectInput(paste0("ShowAtt", i),
                          label = paste(names(defIN()$attLev)[i],
                                        " (", length(defIN()$attLev[[i]]), " Levels)",
@@ -93,8 +94,7 @@ server <- function(input, output, session) {
 
   output$testDecHier <- renderPrint({
 
-    list(input$segs,
-         input$levels)
+    diagramData()
 
 
   })
