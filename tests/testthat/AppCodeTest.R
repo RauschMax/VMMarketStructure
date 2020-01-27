@@ -329,7 +329,8 @@ for (i in 1:length(defIN$nlev)) {
                                      x * (length(defIN$nlev) -
                                             ifelse(is.na(Data_Weighted[[sel2]]),
                                                    0, Data_Weighted[[sel2]]) + 1)
-                                   }), .SDcols = sel1]
+                                   }),
+                .SDcols = sel1]
 }
 
 DT_melted <- melt(Data_Weighted[, mget(c("ID", names(Data_Weighted)[grep("^A", names(Data_Weighted))]))],
@@ -355,7 +356,8 @@ Data_inverseRanks[, names(Data)[grep("^R", names(Data))] :=
                                     function(y) {
                                       ifelse(is.na(y), 0, y)
                                     })
-                           }), .SDcols = names(Data)[grep("^R", names(Data))]]
+                           }),
+                  .SDcols = names(Data)[grep("^R", names(Data))]]
 
 Importance_invRanks <- sapply(Data_inverseRanks[, mget(names(Data_inverseRanks)[grep("^R", names(Data_inverseRanks))])],
                               mean)
@@ -431,7 +433,8 @@ LevelCounts_100_ordered <- LevelCounts_100_ordered[orderAtt]
 attLev_ordered <- lapply(seq_along(attLev_ordered),
                          function(k) {
                            attLev_ordered[[k]][optOrder[[k]]]
-                         })[orderAtt]
+                         }
+                         )[orderAtt]
 
 Imp_ordered <- list(Imp = Importance$Importance[orderAtt],
                     LevCount = LevelCounts_100_ordered,
@@ -684,7 +687,7 @@ histList <- lapply(names(plotData2)[1],
                      plot_multi_histogram(plotData2, x, "LC4")
                    })
 
-do.call(gridExtra::grid.arrange, c(histList, ncol = min(2, ceiling((length(names(segIN$segNumeric)) - 1)/2))))
+do.call(gridExtra::grid.arrange, c(histList, ncol = min(2, ceiling((length(names(segIN$segNumeric)) - 1) / 2))))
 
 
 # Choices
@@ -816,7 +819,8 @@ selectedLevels <- c(1, 1, 1, 1, 1, 1, 1, 1)
 selIndex <- DemandList[[1]][, rowSums(sapply(1:length(nlev),
                          function(x) {
                            .SD[[x]] %in% c(NA, 0, selectedLevels[x])
-                         })) == length(nlev), .SDcols = paste0("Var", 1:length(nlev))]
+                         }
+                         )) == length(nlev), .SDcols = paste0("Var", 1:length(nlev))]
 
 DemandList[[1]][selIndex]
 
@@ -828,7 +832,8 @@ demandAnalysis <- lapply(DemandList,
                            selIndex <- helpDT_in[, rowSums(sapply(1:length(nlev),
                                                                   function(x) {
                                                                     .SD[[x]] %in% c(NA, 0, selectedLevels[x])
-                                                                  })) == length(nlev),
+                                                                  }
+                                                                  )) == length(nlev),
                                                  .SDcols = paste0("Var", 1:length(nlev))]
 
                            helpDT <- helpDT_in[selIndex]
@@ -872,4 +877,3 @@ ggplot(df_demand, aes(x = demand)) +
   geom_density(alpha = .2, fill = "#FF6666") +
   geom_vline(aes(xintercept = mean(demand)),
              color = "blue", linetype = "dashed", size = 1)
-

@@ -5,7 +5,7 @@ segSankeyData <- reactive({
   )
 
   ## Sankey - LC Runs
-  Help_LC_Sankey_1 <- copy(lc_segs())[, mget(paste0("LC" , 2:10))]
+  Help_LC_Sankey_1 <- copy(lc_segs())[, mget(paste0("LC", 2:10))]
 
   for (i in 3:(ncol(Help_LC_Sankey_1) + 1)) {
     sel1 <- paste0("LC", i)
@@ -114,7 +114,7 @@ output$profileFactors <- renderPlot({
                           ggplot(plotData,
                                  aes(fill = LC, y = freq, x = group)) +
                             geom_bar(position = "dodge", stat = "identity") +
-                            theme(axis.text.x = element_text(angle =30, hjust = 1, size = 8),
+                            theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 8),
                                   axis.title.x = element_text(size = 10)) +
                             xlab(x) + ylab(NULL)
 
@@ -124,7 +124,7 @@ output$profileFactors <- renderPlot({
 
 
   do.call(gridExtra::grid.arrange,
-          c(barplotList, ncol = min(3, ceiling((length(names(segIN()$segFactor)) - 1)/2))))
+          c(barplotList, ncol = min(3, ceiling((length(names(segIN()$segFactor)) - 1) / 2))))
 
 
   })
@@ -161,7 +161,7 @@ output$profileNumeric <- renderPlot({
                      })
 
   do.call(gridExtra::grid.arrange,
-          c(histList, ncol = min(3, ceiling((length(names(segIN()$segNumeric)) - 1)/2))))
+          c(histList, ncol = min(3, ceiling((length(names(segIN()$segNumeric)) - 1) / 2))))
 
 })
 
@@ -195,7 +195,7 @@ output$profileChoices <- renderPlot({
                              ggplot(plotDataCho,
                                     aes(fill = LC, y = freq, x = group)) +
                                geom_bar(position = "dodge", stat = "identity") +
-                               theme(axis.text.x = element_text(angle =30, hjust = 1, size = 8),
+                               theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 8),
                                      axis.title.x = element_text(size = 10)) +
                                xlab(names(defIN()$nlev)[x]) + ylab(NULL)
 

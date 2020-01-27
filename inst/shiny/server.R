@@ -96,7 +96,6 @@ server <- function(input, output, session) {
 
     diagramData()
 
-
   })
 
 

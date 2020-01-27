@@ -83,7 +83,8 @@ demandAnalysis <- reactive({
                              selIndex <- helpDT_in[, rowSums(sapply(1:length(defIN()$nlev),
                                                                     function(x) {
                                                                       .SD[[x]] %in% c(NA, 0, selectedLevels[x])
-                                                                    })) == length(defIN()$nlev),
+                                                                    })
+                                                             ) == length(defIN()$nlev),
                                                    .SDcols = paste0("Var", 1:length(defIN()$nlev))]
 
                              helpDT <- helpDT_in[selIndex]

@@ -154,11 +154,11 @@ SKU_choice_DT[order(ID)]
 
 # calculate importances and counts
 Importance_Top2 <- sapply(Data[, grep("^Rank",
-                                        names(Data)),
-                                 with = FALSE],
-                            function(x) {
-                              sum(x %in% 1:2, na.rm = TRUE)
-                            })
+                                      names(Data)),
+                               with = FALSE],
+                          function(x) {
+                            sum(x %in% 1:2, na.rm = TRUE)
+                          })
 Importance_Top2 <- Importance_Top2 / sum(Importance_Top2)
 names(Importance_Top2) <- names(attLev)
 Importance_Top2
@@ -175,7 +175,8 @@ for (i in 1:length(nlev)) {
                                      x * (length(nlev) -
                                             ifelse(is.na(Data_Weighted[[sel2]]),
                                                    0, Data_Weighted[[sel2]]) + 1)
-                                   }), .SDcols = sel1]
+                                   }),
+                .SDcols = sel1]
 }
 Data_Weighted
 
@@ -204,7 +205,8 @@ Data_inverseRanks[, names(Data)[grep("^R", names(Data))] :=
                                     function(y) {
                                       ifelse(is.na(y), 0, y)
                                     })
-                           }), .SDcols = names(Data)[grep("^R", names(Data))]]
+                           }),
+                  .SDcols = names(Data)[grep("^R", names(Data))]]
 
 Data_inverseRanks
 
@@ -249,11 +251,11 @@ LevelCounts_100
 LevelCounts_rel <- lapply(1:length(nlev),
                           function(y) {
                             out <- apply(Data[, grep(paste0("^A", y, "_"),
-                                                              x = names(Data)),
-                                                       with = FALSE], 2, sum) /
+                                                     x = names(Data)),
+                                              with = FALSE], 2, sum) /
                               sum(apply(Data[, grep(paste0("^A", y, "_"),
-                                                             x = names(Data)),
-                                                      with = FALSE], 2, sum)) * Importance[y]
+                                                    x = names(Data)),
+                                             with = FALSE], 2, sum)) * Importance[y]
 
                             names(out) <- attLev[[y]]
                             out
@@ -470,11 +472,11 @@ help(huge)
 
 
 test_huge <- huge(as.matrix(Data[, mget(names(Data)[grep("^A", names(Data))[validVars]])]))
-plot(test_huge)				 #Not aligned
+plot(test_huge)         #Not aligned
 plot(test_huge, align = TRUE) #Aligned
 huge.plot(test_huge$path[[3]])
 
-out.select = huge.select(test_huge)
+out.select <- huge.select(test_huge)
 plot(out.select)
 
 
@@ -483,10 +485,10 @@ data_huge <- as.matrix(Data[, mget(names(Data)[grep("^nAtt[1-9]", names(Data))])
 # data_huge <- as.matrix(Data[, mget(names(Data)[grep("^R", names(Data))])])[, -1]
 # data_huge[is.na(data_huge)] <- 0
 
-out.glasso = huge(data_huge, method = "glasso")
-plot(out.glasso)				 #Not aligned
+out.glasso <- huge(data_huge, method = "glasso")
+plot(out.glasso)         #Not aligned
 plot(out.glasso, align = TRUE) #Aligned
-out.select = huge.select(out.glasso, criterion = "ebic")
+out.select <- huge.select(out.glasso, criterion = "ebic")
 plot(out.select)
 
 summary(out.select)
@@ -631,9 +633,9 @@ LCtest_Grid <- lapply(2:10,
 LCtest_Grid_posterior <- lapply(LCtest_Grid, posterior)
 
 LCtest_Grid_segs <- data.table(sapply(LCtest_Grid_posterior,
-                                     function(x) {
-                                       x$state
-                                     }))
+                                      function(x) {
+                                        x$state
+                                      }))
 
 names(LCtest_Grid_segs) <- paste0("LC", 2:10)
 
@@ -693,19 +695,19 @@ sankeyNetwork(Links = sankeyLinks_LC,
 
 # Test Reproducability LC segments !------------------------------------------------------------------------------------
 LCtest_4 <- lapply(1:10,
-                    function(x) {
-                      set.seed(x)
-                      LCRun <- mix(formulaList,
-                                   data = Data, # the dataset to use
-                                   nstates = 4, # the number of latent classes
-                                   family = lapply(formulaList,
-                                                   function(x) {
-                                                     multinomial()
-                                                   }))
+                   function(x) {
+                     set.seed(x)
+                     LCRun <- mix(formulaList,
+                                  data = Data, # the dataset to use
+                                  nstates = 4, # the number of latent classes
+                                  family = lapply(formulaList,
+                                                  function(x) {
+                                                    multinomial()
+                                                  }))
 
-                      print(x)
-                      fit(LCRun, verbose = TRUE)
-                    })
+                     print(x)
+                     fit(LCRun, verbose = TRUE)
+                   })
 
 lapply(1:9,
        function(x) {
@@ -754,9 +756,9 @@ LCtest_10 <- lapply(1:10,
 LCtest_10_posterior <- lapply(LCtest_10, posterior)
 
 LCtest_10_segs <- data.table(sapply(LCtest_10_posterior,
-                                      function(x) {
-                                        x$state
-                                      }))
+                                    function(x) {
+                                      x$state
+                                    }))
 
 lapply(1:9,
        function(x) {
@@ -767,7 +769,7 @@ lapply(1:9,
 lapply(1:9,
        function(x) {
          chisq.test(table(LCtest_10_segs[, get(paste0("V", x))],
-               LCtest_10_segs[, get(paste0("V", x + 1))]))
+                          LCtest_10_segs[, get(paste0("V", x + 1))]))
        })
 
 # END - Test Reproducability LC segments !------------------------------------------------------------------------------
@@ -809,13 +811,13 @@ lapply(c("zzAge", "zzGender", "SC06", "SC08", "S04"),
        })
 
 for (y in c("zzAge", "zzGender", "SC06", "SC08", "S04")) {
-         heatmap(
-           sapply(split(frame_data[, mget(c(y, seg2profile))][order(get(seg2profile))], by = seg2profile),
-                  function(x) {
-                    prop.table(table(x[, 1, with = FALSE]))
-                  })
-         )
-       }
+  heatmap(
+    sapply(split(frame_data[, mget(c(y, seg2profile))][order(get(seg2profile))], by = seg2profile),
+           function(x) {
+             prop.table(table(x[, 1, with = FALSE]))
+           })
+  )
+}
 
 
 # !---------------------------------------------------------------------------------------------------------------------
@@ -844,13 +846,13 @@ testDist <- lapply(1:nrow(SKUs_per_person),
 lapply(1:25,
        function(y) {
          data.table(t(sapply(SKUs_per_person[1:25, Comb],
-                function(x) {
-                  helpIncl <- x %in% SKUs_per_person[y, Comb][[1]]
+                             function(x) {
+                               helpIncl <- x %in% SKUs_per_person[y, Comb][[1]]
 
-                  out <- sum(helpIncl) / max(length(x[[1]]), length(SKUs_per_person[y, Comb][[1]]))
+                               out <- sum(helpIncl) / max(length(x[[1]]), length(SKUs_per_person[y, Comb][[1]]))
 
-                  out
-                })))
+                               out
+                             })))
        })
 
 testDist_DT <- rbindlist(testDist)
@@ -882,5 +884,3 @@ plot(testClust,  labels = FALSE, hang = -1, main = "Original Tree")
 table(cutree(testClust, k = 10))
 
 Data
-
-

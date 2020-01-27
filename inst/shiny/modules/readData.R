@@ -356,7 +356,7 @@ Importance <- reactive({
     need(dataIN(), "Wait for data!")
   )
 
-  # Alternative Importance calculation !----------------------------------------------------------------------------------
+  # Alternative Importance calculation !--------------------------------------------------------------------------------
 
   Data <- dataUSED()
 
@@ -371,7 +371,8 @@ Importance <- reactive({
                                        x * (length(defIN()$nlev) -
                                               ifelse(is.na(Data_Weighted[[sel2]]),
                                                      0, Data_Weighted[[sel2]]) + 1)
-                                     }), .SDcols = sel1]
+                                     }),
+                  .SDcols = sel1]
   }
 
   DT_melted <- melt(Data_Weighted[, mget(c("ID", names(Data_Weighted)[grep("^A", names(Data_Weighted))]))],
@@ -397,9 +398,11 @@ Importance <- reactive({
                                       function(y) {
                                         ifelse(is.na(y), 0, y)
                                       })
-                             }), .SDcols = names(Data)[grep("^R", names(Data))]]
+                             }),
+                    .SDcols = names(Data)[grep("^R", names(Data))]]
 
-  Importance_invRanks <- sapply(Data_inverseRanks[, mget(names(Data_inverseRanks)[grep("^R", names(Data_inverseRanks))])],
+  Importance_invRanks <- sapply(Data_inverseRanks[, mget(names(Data_inverseRanks)[grep("^R",
+                                                                                       names(Data_inverseRanks))])],
                                 mean)
 
   DT_importance[, imp3 := Importance_invRanks / sum(Importance_invRanks)]
@@ -472,7 +475,8 @@ Imp_ordered <- reactive({
   attLev_ordered <- lapply(seq_along(attLev_ordered),
                            function(k) {
                              attLev_ordered[[k]][optOrder[[k]]]
-                           })[orderAtt]
+                           }
+                           )[orderAtt]
 
   list(Imp = Importance()$Importance[orderAtt],
        LevCount = LevelCounts_100_ordered,
@@ -481,7 +485,7 @@ Imp_ordered <- reactive({
 })
 
 SKU_choice_DT <- reactive({
-  # Alternative SKU_choice_DT !-------------------------------------------------------------------------------------------
+  # Alternative SKU_choice_DT !-----------------------------------------------------------------------------------------
   # NA --> 0 instead of expand.grid(x)
   SKU_choice_2 <- lapply(dataUSED()$ID,
                          function(x) {
