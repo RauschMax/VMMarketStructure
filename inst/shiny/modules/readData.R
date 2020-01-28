@@ -393,7 +393,11 @@ Importance <- reactive({
   Data_inverseRanks[, names(Data)[grep("^R", names(Data))] :=
                       lapply(.SD,
                              function(x) {
-                               out <- (length(defIN()$nlev) + 1) - x
+                               if (all(is.na(x))) {
+                                 out <- x
+                               } else {
+                                 out <- (length(defIN()$nlev) + 1) - x
+                               }
                                sapply(out,
                                       function(y) {
                                         ifelse(is.na(y), 0, y)

@@ -15,6 +15,7 @@ library(ggplot2)
 #Add all required packages here
 
 input <- list(study = "316401010")
+input <- list(study = "316401010b")
 
 ## START - Code "readData.R" !------------------------------------------------------------------------------------------
 ##
@@ -351,11 +352,17 @@ Data_inverseRanks <- Data[, mget(c("ID", names(Data)[grep("^R", names(Data))]))]
 Data_inverseRanks[, names(Data)[grep("^R", names(Data))] :=
                     lapply(.SD,
                            function(x) {
-                             out <- (length(defIN$nlev) + 1) - x
+
+                             if (all(is.na(x))) {
+                               out <- x
+                             } else {
+                               out <- (length(defIN$nlev) + 1) - x
+                             }
                              sapply(out,
                                     function(y) {
                                       ifelse(is.na(y), 0, y)
                                     })
+
                            }),
                   .SDcols = names(Data)[grep("^R", names(Data))]]
 
@@ -381,6 +388,7 @@ LevelCounts_100 <- lapply(paste0("^A", 1:length(defIN$nlev), "_"),
                             out
                           })
 names(LevelCounts_100) <- names(defIN$attLev)
+lapply(LevelCounts_100, round, 2)
 
 # Level counts - summing to attribute importance within attributes
 LevelCounts_rel <- lapply(1:length(defIN$nlev),
