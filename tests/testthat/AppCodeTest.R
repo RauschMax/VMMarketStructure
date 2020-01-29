@@ -15,7 +15,7 @@ library(ggplot2)
 #Add all required packages here
 
 input <- list(study = "316401010")
-input <- list(study = "316401010b")
+# input <- list(study = "316401010b")
 
 ## START - Code "readData.R" !------------------------------------------------------------------------------------------
 ##
@@ -749,6 +749,67 @@ barplotListCho <- lapply(seq_along(defIN$attLev),
 
 do.call(gridExtra::grid.arrange, c(barplotListCho, nrow = 2))
 
+
+# Profiling as data.table
+
+# factor Segments
+
+# segsInclLC
+# dcast(segsInclLC, zzAge ~ LC4, value.var = 'ID', length)
+# segDefIN$segLevFact
+
+segProfileDT <- rbindlist(
+  lapply(seq_along(segDefIN$segLevFact),
+         function(x) {
+           selCol <- names(segIN$segFactor)[x + 1]
+           name <- names(segDefIN$segLevFact)[x]
+           out <- dcast(segsInclLC, get(selCol) ~ get(LCselected), value.var = 'ID', length)
+           out[, Seg := name]
+           setnames(out, "selCol", "Segment")
+           names(out1) <- c("Level",
+                            paste0("LC", sequence(as.numeric(input$segSelect))),
+                            "Attribute")
+           out[, mget(c("Seg", "Segment", as.character(sequence(as.numeric(input$segSelect)))))]
+         }))
+segProfileDT
+
+# Choices
+dataLC
+
+defIN$attLev
+
+dcast(dataLC, A1_1 ~ LC4,
+      value.var = 'ID', length)[2, ]
+
+
+choProfileDT <- rbindlist(
+  lapply(seq_along(defIN$attLev),
+         function(x) {
+
+           attName <- names(defIN$attLev)[x]
+           out1 <- rbindlist(
+             lapply(seq_along(defIN$attLev[[x]]),
+                    function(y) {
+                      selCol <- paste0("A", x, "_", y)
+                      levName <- defIN$attLev[[x]][y]
+                      out2 <- dcast(dataLC, get(selCol) ~ get(LCselected),
+                                   value.var = 'ID', length)[2, ]
+                      setnames(out2, "selCol", "level")
+                      out2[, level := levName]
+                      out2
+                    }))
+
+           names(out1) <- c("Level",
+                            paste0("LC", sequence(as.numeric(input$segSelect))))
+
+           out1[, Attribute := attName]
+
+           out1[, mget(c("Attribute", "Level",
+                         paste0("LC", sequence(as.numeric(input$segSelect)))))]
+
+         })
+  )
+choProfileDT
 
 # Demand & Substitution !-----------------------------------------------------------------------------------------------
 

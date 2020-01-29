@@ -209,6 +209,106 @@ output$profileChoices <- renderPlot({
 })
 
 
+output$profileSegDT <- DT::renderDataTable({
+
+  validate(
+    need(lc_segs(), "Please load the data.")
+  )
+
+  if (is.null(input$segSelect)) {
+    LCselected <- paste0("LC", 4)
+    LCnames <- paste0("LC", 1:4)
+  } else {
+    LCselected <- paste0("LC", input$segSelect)
+    LCnames <- paste0("LC", sequence(as.numeric(input$segSelect)))
+  }
+
+  segsInclLC <- segIN()$segFactor[lc_segs(), on = "ID"]
+
+  segProfileDT <- rbindlist(
+    lapply(seq_along(segDefIN()$segLevFact),
+           function(x) {
+             selCol <- names(segIN()$segFactor)[x + 1]
+             name <- names(segDefIN()$segLevFact)[x]
+             out <- dcast(segsInclLC, get(selCol) ~ get(LCselected), value.var = 'ID', length)
+             out[, Seg := name]
+             names(out) <- c("Segment", LCnames, "Seg")
+
+             out[, mget(c("Seg", "Segment", LCnames))]
+           }))
+
+  DT::datatable(segProfileDT, selection = list(mode = 'single', target = 'column'),
+                filter = "none", autoHideNavigation = TRUE, rownames = TRUE,
+                escape = FALSE, style = "default", class = 'compact',
+                options = list(pageLength = 25,
+                               dom = 'lrtip',
+                               initComplete = JS(
+                                 "function(settings, json) {",
+                                 "$(this.api().table().header()).css({'background-color': '#989898',
+                                 'color': '#fff'});",
+                                 "}"),
+                               lengthMenu = list(c(5, 25, -1),
+                                                 c('5', '25', 'All'))))
+})
+
+
+output$profileChoDT <- DT::renderDataTable({
+
+  validate(
+    need(lc_segs(), "Please load the data.")
+  )
+
+  if (is.null(input$segSelect)) {
+    LCselected <- paste0("LC", 4)
+    LCnames <- paste0("LC", 1:4)
+  } else {
+    LCselected <- paste0("LC", input$segSelect)
+    LCnames <- paste0("LC", sequence(as.numeric(input$segSelect)))
+  }
+
+  dataLC <- dataIN()[lc_segs(), on = "ID"]
+
+  choProfileDT <- rbindlist(
+    lapply(seq_along(defIN()$attLev),
+           function(x) {
+
+             attName <- names(defIN()$attLev)[x]
+             out1 <- rbindlist(
+               lapply(seq_along(defIN()$attLev[[x]]),
+                      function(y) {
+                        selCol <- paste0("A", x, "_", y)
+                        levName <- defIN()$attLev[[x]][y]
+                        out2 <- dcast(dataLC, get(selCol) ~ get(LCselected),
+                                      value.var = 'ID', length)[2, ]
+                        setnames(out2, "selCol", "level")
+                        out2[, level := levName]
+                        out2
+                      }))
+
+             names(out1) <- c("Level", LCnames)
+
+             out1[, Attribute := attName]
+
+             out1[, mget(c("Attribute", "Level", LCnames))]
+
+           })
+  )
+
+  DT::datatable(choProfileDT, selection = list(mode = 'single', target = 'column'),
+                filter = "none", autoHideNavigation = TRUE, rownames = TRUE,
+                escape = FALSE, style = "default", class = 'compact',
+                options = list(pageLength = 25,
+                               dom = 'lrtip',
+                               initComplete = JS(
+                                 "function(settings, json) {",
+                                 "$(this.api().table().header()).css({'background-color': '#989898',
+                                 'color': '#fff'});",
+                                 "}"),
+                               lengthMenu = list(c(5, 25, -1),
+                                                 c('5', '25', 'All'))))
+})
+
+
 output$testSegTab <- renderPrint({
 
   input$segSelect

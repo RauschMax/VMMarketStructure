@@ -188,6 +188,12 @@ ui <- kantarPage(
                                             width = 12)),
               well = FALSE, widths = c(2, 10), id = "SegNavList")),
           tabPanel(
+            title = 'Segment Profile Tables',
+            kantarBox(div(style = "overflow-y: scroll; height:80vh; font-size:80%;",
+                          DT::dataTableOutput("profileSegDT"))),
+            kantarBox(div(style = "overflow-y: scroll; height:80vh; font-size:80%;",
+                          DT::dataTableOutput("profileChoDT")))),
+          tabPanel(
             title = 'Personas',
             "Segment Personas"),
           tabPanel(
