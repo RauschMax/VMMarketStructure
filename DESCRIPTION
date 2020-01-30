@@ -6,11 +6,11 @@ Description: The market structure provides clarity for what benefits and attribu
              important and which products provide the most incrementality based on where they fall in the structure.
 Authors@R: person("Maximilian", "Rausch", email = "maximilian.rausch@kantar.com", role = c("aut", "cre"))
 License: file LICENSE
-URL: https://kantarware.visualstudio.com/KT-BeastRepo/_git/VMDecisionTree
-BugReports: https://kantarware.visualstudio.com/KT-BeastRepo/_backlogs/Iteration/VMDecisionTree
+URL: https://kantarware.visualstudio.com/KT-BeastRepo/_git/VMMarketStructure
+BugReports: https://kantarware.visualstudio.com/KT-BeastRepo/_backlogs/Iteration/VMMarketStructure
 Encoding: UTF-8
 LazyData: true
-Suggests: testthat,
+Imports: testthat,
     shiny,
     shinydashboard,
     kantardashboard,
