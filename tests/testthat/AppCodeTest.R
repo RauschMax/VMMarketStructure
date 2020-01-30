@@ -679,23 +679,23 @@ plotData2[, c(LCselected) := factor(get(LCselected))]
 # names(plotData2) <- c("Age", "LC")
 
 
-plot_multi_histogram <- function(df, feature, label_column) {
-  plt <- ggplot(df, aes(x = eval(parse(text = feature)), fill = eval(parse(text = label_column)))) +
-    geom_histogram(alpha = 0.7, position = "identity", aes(y  =  ..density..),
-                   color = "black", bins = 15) +
-    geom_density(alpha = 0.7) +
-    geom_vline(aes(xintercept = mean(eval(parse(text = feature)))), color = "black", linetype = "dashed", size = 1) +
-    labs(x = feature, y  =  "Density")
-  plt + ggplot2::guides(fill = ggplot2::guide_legend(title = label_column))
-}
-# plot_multi_histogram(plotData2, "SC01", "LC4")
-
-histList <- lapply(names(plotData2)[1],
-                   function(x) {
-                     plot_multi_histogram(plotData2, x, "LC4")
-                   })
-
-do.call(gridExtra::grid.arrange, c(histList, ncol = min(2, ceiling((length(names(segIN$segNumeric)) - 1) / 2))))
+# plot_multi_histogram <- function(df, feature, label_column) {
+#   plt <- ggplot(df, aes(x = eval(parse(text = feature)), fill = eval(parse(text = label_column)))) +
+#     geom_histogram(alpha = 0.7, position = "identity", aes(y  =  ..density..),
+#                    color = "black", bins = 15) +
+#     geom_density(alpha = 0.7) +
+#     geom_vline(aes(xintercept = mean(eval(parse(text = feature)))), color = "black", linetype = "dashed", size = 1) +
+#     labs(x = feature, y  =  "Density")
+#   plt + ggplot2::guides(fill = ggplot2::guide_legend(title = label_column))
+# }
+# # plot_multi_histogram(plotData2, "SC01", "LC4")
+#
+# histList <- lapply(names(plotData2)[1],
+#                    function(x) {
+#                      plot_multi_histogram(plotData2, x, "LC4")
+#                    })
+#
+# do.call(gridExtra::grid.arrange, c(histList, ncol = min(2, ceiling((length(names(segIN$segNumeric)) - 1) / 2))))
 
 
 # Choices

@@ -187,21 +187,21 @@ output$uniquenessBox <- renderValueBox({
            icon = icon("star-o"))
 })
 
-output$demandHist <- renderPlot({
-
-  df_demand <- data.table(demand = sapply(demandAnalysis(),
-                                          function(x) {
-                                            x$demand
-                                          }))
-
-  ggplot(df_demand, aes(x = demand)) +
-    geom_histogram(alpha = 0.7, position = "identity",
-                   aes(y  =  ..density..),
-                   color = "black", bins = 15) +
-    geom_density(alpha = .2, fill = "#FF6666") +
-    geom_vline(aes(xintercept = mean(demand)),
-               color = "blue", linetype = "dashed", size = 1)
-  })
+# output$demandHist <- renderPlot({
+#
+#   df_demand <- data.table(demand = sapply(demandAnalysis(),
+#                                           function(x) {
+#                                             x$demand
+#                                           }))
+#
+#   ggplot(df_demand, aes(x = demand)) +
+#     geom_histogram(alpha = 0.7, position = "identity",
+#                    aes(y  =  ..density..),
+#                    color = "black", bins = 15) +
+#     geom_density(alpha = .2, fill = "#FF6666") +
+#     geom_vline(aes(xintercept = mean(demand)),
+#                color = "blue", linetype = "dashed", size = 1)
+#   })
 
 output$strategyProfile <- DT::renderDataTable({
 
@@ -251,9 +251,8 @@ output$strategyProfile <- DT::renderDataTable({
                         Change = Reduce(c, stratDemand) * 100)
 
 
-  color_from_middle <- function(data, color1, color2)
-  {
-    max_val = max(abs(data))
+  color_from_middle <- function(data, color1, color2) {
+    max_val <- max(abs(data))
     JS(sprintf(paste0("isNaN(parseFloat(value)) || value < 0 ? 'linear-gradient(90deg, transparent,",
                       "transparent ' + (50 + value/%s * 50) + '%%, %s ' + (50 + value/%s * 50) + '%%,%s  50%%,",
                       "transparent 50%%)': 'linear-gradient(90deg, transparent, transparent 50%%,",
@@ -277,7 +276,7 @@ output$strategyProfile <- DT::renderDataTable({
                                  "}"))) %>%
     DT::formatRound("Change", digits = 1) %>%
     DT::formatStyle(columns = "Change",
-                    background = color_from_middle(stratDT$Change,'red','blue'),
+                    background = color_from_middle(stratDT$Change, 'red', 'blue'),
                     backgroundSize = '98% 90%',
                     backgroundRepeat = 'no-repeat',
                     backgroundPosition = 'center') %>%

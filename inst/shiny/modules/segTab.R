@@ -130,40 +130,40 @@ output$profileFactors <- renderPlot({
   })
 
 
-output$profileNumeric <- renderPlot({
-  if (is.null(input$segSelect)) {
-    LCselected <- paste0("LC", 4)
-  } else {
-    LCselected <- paste0("LC", input$segSelect)
-  }
-
-  segsInclLCNum <- segIN()$segNumeric[lc_segs(), on = "ID"]
-  plotData2 <- segsInclLCNum[, mget(c(names(segIN()$segNumeric)[-1], LCselected))]
-
-  plotData2[, c(LCselected) := factor(get(LCselected))]
-
-  plot_multi_histogram <- function(df, feature, label_column) {
-    plt <- ggplot(df, aes(x = eval(parse(text = feature)),
-                          fill = eval(parse(text = label_column)))) +
-      geom_histogram(alpha = 0.7, position = "identity",
-                     aes(y = ..density..), color = "black",
-                     bins = 15) +
-      geom_density(alpha = 0.7) +
-      geom_vline(aes(xintercept = mean(eval(parse(text = feature)))),
-                 color = "black", linetype = "dashed", size = 1) +
-      labs(x = feature, y = "Density")
-    plt + guides(fill = guide_legend(title = label_column))
-  }
-
-  histList <- lapply(names(plotData2)[1],
-                     function(x) {
-                       plot_multi_histogram(plotData2, x, LCselected)
-                     })
-
-  do.call(gridExtra::grid.arrange,
-          c(histList, ncol = min(3, ceiling((length(names(segIN()$segNumeric)) - 1) / 2))))
-
-})
+# output$profileNumeric <- renderPlot({
+#   if (is.null(input$segSelect)) {
+#     LCselected <- paste0("LC", 4)
+#   } else {
+#     LCselected <- paste0("LC", input$segSelect)
+#   }
+#
+#   segsInclLCNum <- segIN()$segNumeric[lc_segs(), on = "ID"]
+#   plotData2 <- segsInclLCNum[, mget(c(names(segIN()$segNumeric)[-1], LCselected))]
+#
+#   plotData2[, c(LCselected) := factor(get(LCselected))]
+#
+#   plot_multi_histogram <- function(df, feature, label_column) {
+#     plt <- ggplot(df, aes(x = eval(parse(text = feature)),
+#                           fill = eval(parse(text = label_column)))) +
+#       geom_histogram(alpha = 0.7, position = "identity",
+#                      aes(y = ..density..), color = "black",
+#                      bins = 15) +
+#       geom_density(alpha = 0.7) +
+#       geom_vline(aes(xintercept = mean(eval(parse(text = feature)))),
+#                  color = "black", linetype = "dashed", size = 1) +
+#       labs(x = feature, y = "Density")
+#     plt + guides(fill = guide_legend(title = label_column))
+#   }
+#
+#   histList <- lapply(names(plotData2)[1],
+#                      function(x) {
+#                        plot_multi_histogram(plotData2, x, LCselected)
+#                      })
+#
+#   do.call(gridExtra::grid.arrange,
+#           c(histList, ncol = min(3, ceiling((length(names(segIN()$segNumeric)) - 1) / 2))))
+#
+# })
 
 
 output$profileChoices <- renderPlot({
