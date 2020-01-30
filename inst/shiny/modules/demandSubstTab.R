@@ -60,7 +60,10 @@ DemandList <- reactive({
 
   names(DemandList) <- Data[, ID]
 
-  DemandList
+  Demand_DT <- rbindlist(DemandList)[, mget(c("ID", paste0("Var", 1:length(defIN()$nlev)), "demand"))]
+
+  list(DemandList = DemandList,
+       Demand_DT = Demand_DT)
 
 })
 
@@ -68,14 +71,12 @@ demandAnalysis <- reactive({
 
   Data <- dataUSED()
 
-  nAttr <- length(defIN()$nlev)
-
-  selectedLevels <- sapply(1:(nAttr),
+  selectedLevels <- sapply(1:length(defIN()$nlev),
          function(i) {
            as.numeric(input[[paste0("ShowAtt", i)]])
          })
 
-  demandAnalysis <- lapply(DemandList(),
+  demandAnalysis <- lapply(DemandList()$DemandList,
                            function(x) {
                              helpDT_in <- copy(x)
                              helpDT_in[, c(paste0("Val", seq_along(defIN()$nlev))) := NULL]
@@ -87,9 +88,13 @@ demandAnalysis <- reactive({
                                                              ) == length(defIN()$nlev),
                                                    .SDcols = paste0("Var", 1:length(defIN()$nlev))]
 
-                             helpDT <- helpDT_in[selIndex]
-
-                             demandHelp <- max(helpDT[, demand])
+                             if (any(selIndex)) {
+                               helpDT <- helpDT_in[selIndex]
+                               demandHelp <- max(helpDT[, demand])
+                             } else {
+                               helpDT <- NA
+                               demandHelp <- 0
+                             }
 
                              compHelp <- helpDT_in[demand > demandHelp]
                              compHelp
@@ -117,11 +122,6 @@ output$demandBox <- renderValueBox({
                         function(x) {
                           x$demand
                         }))
-  #
-  # valueBox(value = round(demand, 2),
-  #          subtitle = "Demand",
-  #          color = "green",
-  #          icon = icon("heart-o"))
 
   valueBox(value = format(round(demand, 3) * 100, nsmall = 1),
            subtitle = "Demand of selected product",
@@ -203,6 +203,93 @@ output$demandHist <- renderPlot({
                color = "blue", linetype = "dashed", size = 1)
   })
 
+output$strategyProfile <- DT::renderDataTable({
+
+  validate(
+    need(lc_segs(), "Please load the data.")
+  )
+
+  demand_selected <- mean(sapply(demandAnalysis(),
+                                 function(x) {
+                                   x$demand
+                                 }))
+
+  selectedLevels <- sapply(1:length(defIN()$nlev),
+                           function(i) {
+                             as.numeric(input[[paste0("ShowAtt", i)]])
+                           })
+
+  stratRotation <- lapply(seq_along(selectedLevels),
+                          function(x) {
+                            lapply(1:defIN()$nlev[x],
+                                   function(y) {
+                                     out <- selectedLevels
+                                     out[x] <- y
+                                     out
+                                   })
+                          })
+
+  stratDemand <- sapply(stratRotation,
+                        function(i) {
+                          sapply(i,
+                                 function(j) {
+                                   selectedLevels <- j
+                                   selIndexDT <- DemandList()$Demand_DT[, rowSums(sapply(1:length(defIN()$nlev),
+                                                                            function(x) {
+                                                                              .SD[[x]] %in% c(NA, 0, selectedLevels[x])
+                                                                            }
+                                   )) == length(defIN()$nlev),
+                                   .SDcols = paste0("Var", 1:length(defIN()$nlev))]
+
+                                   mean(DemandList()$Demand_DT[selIndexDT, ][, max(demand), by = ID][, V1]) -
+                                     demand_selected
+                                 })
+                        })
+
+  stratDT <- data.table(Attribute = rep(names(defIN()$attLev), defIN()$nlev),
+                        Level = unlist(defIN()$attLev),
+                        Change = Reduce(c, stratDemand) * 100)
+
+
+  color_from_middle <- function(data, color1, color2)
+  {
+    max_val = max(abs(data))
+    JS(sprintf(paste0("isNaN(parseFloat(value)) || value < 0 ? 'linear-gradient(90deg, transparent,",
+                      "transparent ' + (50 + value/%s * 50) + '%%, %s ' + (50 + value/%s * 50) + '%%,%s  50%%,",
+                      "transparent 50%%)': 'linear-gradient(90deg, transparent, transparent 50%%,",
+                      "%s 50%%, %s ' + (50 + value/%s * 50) + '%%, transparent ' + (50 + value/%s * 50) + '%%)'"),
+               max_val, color1, max_val, color1, color2, color2, max_val, max_val))
+  }
+
+  DT::datatable(stratDT, selection = list(mode = 'single', target = 'row'),
+                filter = "none", autoHideNavigation = TRUE, rownames = FALSE,
+                escape = FALSE, style = "default", class = 'compact',
+                options = list(columnDefs = list(list(className = 'dt-right', targets = 2),
+                                                 list(width = '40%', targets = 2)),
+                               autoWidth = TRUE,
+                               pageLength = nrow(stratDT),
+                               ordering = FALSE,
+                               dom = 't',
+                               initComplete = JS(
+                                 "function(settings, json) {",
+                                 "$(this.api().table().header()).css({'background-color': '#989898',
+                                             'color': '#fff'});",
+                                 "}"))) %>%
+    DT::formatRound("Change", digits = 1) %>%
+    DT::formatStyle(columns = "Change",
+                    background = color_from_middle(stratDT$Change,'red','blue'),
+                    backgroundSize = '98% 90%',
+                    backgroundRepeat = 'no-repeat',
+                    backgroundPosition = 'center') %>%
+    DT::formatStyle(columns = "Attribute",
+                    target = 'row',
+                    backgroundColor =
+                      DT::styleEqual(unique(stratDT$Attribute),
+                                     grDevices::colorRampPalette(c("white",
+                                                                   "grey"))(length(unique(stratDT$Attribute)))))
+
+})
+
 output$testDemand <- renderPrint({
-  demandAnalysis()[1:3]
+  "HI THERE"
 })

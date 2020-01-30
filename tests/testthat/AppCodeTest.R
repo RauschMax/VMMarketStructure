@@ -905,9 +905,14 @@ demandAnalysis <- lapply(DemandList,
                                                                   )) == length(nlev),
                                                  .SDcols = paste0("Var", 1:length(nlev))]
 
-                           helpDT <- helpDT_in[selIndex]
 
-                           demandHelp <- max(helpDT[, demand])
+                           if (any(selIndex)) {
+                             helpDT <- helpDT_in[selIndex]
+                             demandHelp <- max(helpDT[, demand])
+                           } else {
+                             helpDT <- NA
+                             demandHelp <- 0
+                           }
 
                            compHelp <- helpDT_in[demand > demandHelp]
                            compHelp
@@ -934,24 +939,24 @@ mean(sapply(demandAnalysis,
               x$nComp
             }))
 
-df_demand <- data.table(demand = sapply(demandAnalysis,
-                         function(x) {
-                           x$demand
-                         }))
-
-ggplot(df_demand, aes(x = demand)) +
-  geom_histogram(alpha = 0.7, position = "identity",
-                 aes(y  =  ..density..),
-                 color = "black", bins = 15) +
-  geom_density(alpha = .2, fill = "#FF6666") +
-  geom_vline(aes(xintercept = mean(demand)),
-             color = "blue", linetype = "dashed", size = 1)
+# df_demand <- data.table(demand = sapply(demandAnalysis,
+#                          function(x) {
+#                            x$demand
+#                          }))
+#
+# ggplot(df_demand, aes(x = demand)) +
+#   geom_histogram(alpha = 0.7, position = "identity",
+#                  aes(y  =  ..density..),
+#                  color = "black", bins = 15) +
+#   geom_density(alpha = .2, fill = "#FF6666") +
+#   geom_vline(aes(xintercept = mean(demand)),
+#              color = "blue", linetype = "dashed", size = 1)
 
 
 attLev
 
-allProds <- expand.grid(lapply(nlev, sequence))
-
+# allProds <- expand.grid(lapply(nlev, sequence))
+#
 selIndexDT <- Demand_DT[, rowSums(sapply(1:length(nlev),
                                          function(x) {
                                            .SD[[x]] %in% c(NA, 0, selectedLevels[x])
@@ -961,22 +966,43 @@ selIndexDT <- Demand_DT[, rowSums(sapply(1:length(nlev),
 
 Demand_DT[selIndexDT, ][, max(demand), by = ID]
 
-mean(Demand_DT[selIndexDT, ][, max(demand), by = ID][, V1])
+demand_selected <- mean(Demand_DT[selIndexDT, ][, max(demand), by = ID][, V1])
 
 selectedLevels
-nrow(allProds)
-stratDemand <- lapply(1:5,
+
+defIN$nlev
+stratRotation <- lapply(seq_along(selectedLevels),
+                        function(x) {
+                          lapply(1:defIN$nlev[x],
+                                 function(y) {
+                                   out <- selectedLevels
+                                   out[x] <- y
+                                   out
+                                 })
+                          })
+stratRotation
+
+stratDemand <- sapply(stratRotation,
                       function(i) {
-                        selectedLevels <- allProds[i, ]
-                        selIndexDT <- Demand_DT[, rowSums(sapply(1:length(nlev),
-                                                                 function(x) {
-                                                                   .SD[[x]] %in% c(NA, 0, selectedLevels[x])
-                                                                 }
-                        )) == length(nlev),
-                        .SDcols = paste0("Var", 1:length(nlev))]
+                        sapply(i,
+                               function(j) {
+                                 selectedLevels <- j
+                                 selIndexDT <- Demand_DT[, rowSums(sapply(1:length(defIN$nlev),
+                                                                          function(x) {
+                                                                            .SD[[x]] %in% c(NA, 0, selectedLevels[x])
+                                                                          }
+                                 )) == length(defIN$nlev),
+                                 .SDcols = paste0("Var", 1:length(defIN$nlev))]
 
+                                 Demand_DT[selIndexDT, ][, max(demand), by = ID]
 
-                        Demand_DT[selIndexDT, ][, max(demand), by = ID]
-
-                        mean(Demand_DT[selIndexDT, ][, max(demand), by = ID][, V1])
+                                 mean(Demand_DT[selIndexDT, ][, max(demand), by = ID][, V1]) - demand_selected
+                               })
                       })
+
+stratDemand
+
+stratDT <- data.table(attricute = rep(names(defIN$attLev), defIN$nlev),
+                      level = unlist(defIN$attLev),
+                      change = Reduce(c, stratDemand) * 100)
+stratDT
