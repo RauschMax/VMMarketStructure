@@ -50,7 +50,7 @@ system.time({
                                             container = paste0("ms", input$study),
                                             blob = "data.csv")
 
-  data <- as.data.table(httr::content(get_data, type = "text/csv", encoding = "UTF-8"))
+  data <- data.table(httr::content(get_data, type = "text/csv", encoding = "UTF-8"))
 })
 
 data
@@ -276,7 +276,7 @@ lapply(LevelCounts_100, round, digits = 3)
 lapply(seq_along(LevelCounts_100),
        function(x) {
          cat(paste(names(attLev)[orderAtt[x]]), "\n", file = "DecisionMatOut_unsortiert.csv", append = TRUE)
-         out <- as.data.table(t(LevelCounts_100[[orderAtt[x]]]))
+         out <- data.table(t(LevelCounts_100[[orderAtt[x]]]))
          write.table(out, file = "DecisionMatOut_unsortiert.csv", append = TRUE,
                      sep = ";", dec = ",", row.names = FALSE)
        })
@@ -335,7 +335,7 @@ jsonlite::write_json(optOrdeGA[orderAtt], paste0(pathOUT, "/appData/orderGA.json
 lapply(seq_along(LevelCounts_100),
        function(x) {
          cat(paste(names(attLev)[orderAtt[x]]), "\n", file = "DecisionMatOut_sortiert_GA.csv", append = TRUE)
-         out <- as.data.table(t(LevelCounts_100[[orderAtt[x]]][optOrdeGA[[orderAtt[x]]]]))
+         out <- data.table(t(LevelCounts_100[[orderAtt[x]]][optOrdeGA[[orderAtt[x]]]]))
          write.table(out, file = "DecisionMatOut_sortiert_GA.csv", append = TRUE,
                      sep = ";", dec = ",", row.names = FALSE)
        })

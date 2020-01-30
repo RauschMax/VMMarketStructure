@@ -158,7 +158,7 @@ server <- function(input, output, session) {
   # Log-out button - leave at end
   observeEvent(input$logout, {
     session <- NULL
-    stopApp()
+    shiny::stopApp()
   })
 }
 

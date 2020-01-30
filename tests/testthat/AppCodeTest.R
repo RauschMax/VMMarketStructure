@@ -87,7 +87,7 @@ get_data <- BeastRServer::azure_blob_call("GET",
                                           container = paste0("ms", input$study),
                                           blob = "data.csv")
 
-Data <- as.data.table(httr::content(get_data, type = "text/csv", encoding = "UTF-8"))
+Data <- data.table(httr::content(get_data, type = "text/csv", encoding = "UTF-8"))
 
 print("Data read")
 Data
@@ -115,7 +115,7 @@ get_lcSegs <- BeastRServer::azure_blob_call("GET",
                                             container = paste0("ms", input$study),
                                             blob = "LC_segs.csv")
 
-lc_segs <- as.data.table(httr::content(get_lcSegs, type = "text/csv", encoding = "UTF-8"))
+lc_segs <- data.table(httr::content(get_lcSegs, type = "text/csv", encoding = "UTF-8"))
 
 print("LC read")
 lc_segs
@@ -145,7 +145,7 @@ get_segs <- BeastRServer::azure_blob_call("GET",
                                           container = paste0("ms", input$study),
                                           blob = "segments.csv")
 
-segments <- as.data.table(httr::content(get_segs, type = "text/csv", encoding = "UTF-8"))
+segments <- data.table(httr::content(get_segs, type = "text/csv", encoding = "UTF-8"))
 
 print("Segments read")
 segments
@@ -686,7 +686,7 @@ plot_multi_histogram <- function(df, feature, label_column) {
     geom_density(alpha = 0.7) +
     geom_vline(aes(xintercept = mean(eval(parse(text = feature)))), color = "black", linetype = "dashed", size = 1) +
     labs(x = feature, y  =  "Density")
-  plt + guides(fill = guide_legend(title = label_column))
+  plt + ggplot2::guides(fill = ggplot2::guide_legend(title = label_column))
 }
 # plot_multi_histogram(plotData2, "SC01", "LC4")
 
@@ -881,7 +881,7 @@ names(DemandList) <- Data[, ID]
 DemandList[1:5]
 DemandList[[1]]
 
-Demand_DT <- rbindlist(DemandList)[, mget(c("ID", paste0("Var", 1:length(nlev)), "demand"))]
+(Demand_DT <- rbindlist(DemandList)[, mget(c("ID", paste0("Var", 1:length(nlev)), "demand"))])
 
 selectedLevels <- c(1, 1, 1, 1, 1, 1, 1, 1)
 
@@ -946,3 +946,37 @@ ggplot(df_demand, aes(x = demand)) +
   geom_density(alpha = .2, fill = "#FF6666") +
   geom_vline(aes(xintercept = mean(demand)),
              color = "blue", linetype = "dashed", size = 1)
+
+
+attLev
+
+allProds <- expand.grid(lapply(nlev, sequence))
+
+selIndexDT <- Demand_DT[, rowSums(sapply(1:length(nlev),
+                                         function(x) {
+                                           .SD[[x]] %in% c(NA, 0, selectedLevels[x])
+                                         }
+                                         )) == length(nlev),
+                        .SDcols = paste0("Var", 1:length(nlev))]
+
+Demand_DT[selIndexDT, ][, max(demand), by = ID]
+
+mean(Demand_DT[selIndexDT, ][, max(demand), by = ID][, V1])
+
+selectedLevels
+nrow(allProds)
+stratDemand <- lapply(1:5,
+                      function(i) {
+                        selectedLevels <- allProds[i, ]
+                        selIndexDT <- Demand_DT[, rowSums(sapply(1:length(nlev),
+                                                                 function(x) {
+                                                                   .SD[[x]] %in% c(NA, 0, selectedLevels[x])
+                                                                 }
+                        )) == length(nlev),
+                        .SDcols = paste0("Var", 1:length(nlev))]
+
+
+                        Demand_DT[selIndexDT, ][, max(demand), by = ID]
+
+                        mean(Demand_DT[selIndexDT, ][, max(demand), by = ID][, V1])
+                      })

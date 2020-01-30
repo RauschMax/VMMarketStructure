@@ -294,6 +294,11 @@ output$profileChoDT <- DT::renderDataTable({
            })
   )
 
+  brks <- quantile(choProfileDT[, mget(LCnames)],
+                   probs = seq(.05, .95, .05), na.rm = TRUE)
+  clrs <- round(seq(255, 40, length.out = length(brks) + 1), 0) %>%
+    {paste0("rgb(255,", ., ",", ., ")")}
+
   DT::datatable(choProfileDT, selection = list(mode = 'single', target = 'column'),
                 filter = "none", autoHideNavigation = TRUE, rownames = TRUE,
                 escape = FALSE, style = "default", class = 'compact',
@@ -305,7 +310,8 @@ output$profileChoDT <- DT::renderDataTable({
                                  'color': '#fff'});",
                                  "}"),
                                lengthMenu = list(c(5, 25, -1),
-                                                 c('5', '25', 'All'))))
+                                                 c('5', '25', 'All')))) %>%
+    formatStyle(LCnames, backgroundColor = styleInterval(brks, clrs))
 })
 
 

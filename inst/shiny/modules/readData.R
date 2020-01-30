@@ -65,7 +65,7 @@ dataIN <- eventReactive(input$go, {
                                               container = paste0("ms", input$study),
                                               blob = "data.csv")
 
-    data <- as.data.table(httr::content(get_data, type = "text/csv", encoding = "UTF-8"))
+    data <- data.table(httr::content(get_data, type = "text/csv", encoding = "UTF-8"))
 
     print("data read")
     data
@@ -104,7 +104,7 @@ lc_segs <- eventReactive(input$go, {
                                               container = paste0("ms", input$study),
                                               blob = "LC_segs.csv")
 
-    lc_segs <- as.data.table(httr::content(get_lcSegs, type = "text/csv", encoding = "UTF-8"))
+    lc_segs <- data.table(httr::content(get_lcSegs, type = "text/csv", encoding = "UTF-8"))
 
     print("LC read")
     lc_segs
@@ -134,7 +134,7 @@ segments <- eventReactive(input$go, {
                                               container = paste0("ms", input$study),
                                               blob = "segments.csv")
 
-    segments <- as.data.table(httr::content(get_segs, type = "text/csv", encoding = "UTF-8"))
+    segments <- data.table(httr::content(get_segs, type = "text/csv", encoding = "UTF-8"))
 
     print("Segments read")
 
