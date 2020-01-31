@@ -1,3 +1,25 @@
+# Study Overview
+output$attLev <- renderUI({
+
+  validate(
+    need(defIN(), "Please load the data.")
+  )
+
+  nAttr <- length(defIN()$nlev)
+  lapply(1:(nAttr),
+         function(i) {
+           choList <- as.list(seq_along(defIN()$attLev[[i]]))
+           names(choList) <- defIN()$attLev[[i]]
+           selectInput(paste0("ShowAtt", i),
+                       label = paste(names(defIN()$attLev)[i],
+                                     " (", length(defIN()$attLev[[i]]), " Levels)",
+                                     sep = "", collapse = " "),
+                       choices = choList,
+                       selected = NULL,
+                       width = '100%')
+         })
+})
+
 ## Demand !----
 
 DemandList <- reactive({

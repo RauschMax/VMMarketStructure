@@ -212,6 +212,12 @@ output$selectionSizeBox <- renderValueBox({
            icon = icon("users"))
 })
 
+output$testDecHier <- renderPrint({
+
+  diagramData()
+
+})
+
 # output$selComb <- renderUI({
 #
 #   tags$table(style = "font-size:10px; width:100%;",

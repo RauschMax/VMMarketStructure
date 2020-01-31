@@ -22,6 +22,7 @@ app_url <- ifelse(interactive(), "http://localhost:8100", "http://10.236.230.79/
 ####Server####
 server <- function(input, output, session) {
 
+
   # LOAD MODULES !------------------------------------------------------------------------------------------------------
   ## Read Files from BLOB storage
   source("./modules/readData.R",
@@ -50,30 +51,6 @@ server <- function(input, output, session) {
   # MODULES LOADED !----------------------------------------------------------------------------------------------------
 
 
-  # Study Overview
-  output$attLev <- renderUI({
-
-    validate(
-      need(defIN(), "Please load the data.")
-    )
-
-    nAttr <- length(defIN()$nlev)
-    lapply(1:(nAttr),
-           function(i) {
-             choList <- as.list(seq_along(defIN()$attLev[[i]]))
-             names(choList) <- defIN()$attLev[[i]]
-             selectInput(paste0("ShowAtt", i),
-                         label = paste(names(defIN()$attLev)[i],
-                                       " (", length(defIN()$attLev[[i]]), " Levels)",
-                                       sep = "", collapse = " "),
-                         choices = choList,
-                         selected = NULL,
-                         width = '100%')
-           })
-  })
-
-
-
   output$test <- renderPrint({
 
     list(names(session$clientData),
@@ -83,77 +60,12 @@ server <- function(input, output, session) {
 
   })
 
-
-
   output$test2 <- renderPrint({
 
     list(dataUSED(),
          selectionSize())
 
   })
-
-  output$testDecHier <- renderPrint({
-
-    diagramData()
-
-  })
-
-
-  # output$portGRID <- DT::renderDataTable({
-  #
-  #   combs <- SKU_choice_DT()[, .(.N), by = .(Att1, Att2, Att3, Att4, Att5, Att6, Att7, Att8)][order(-N)]
-  #
-  #   helpVec <- rep(NA, 100)
-  #   helpVec[1:min(100, length(combs$N))] <- sort(combs$N, decreasing = TRUE)[1:min(100, length(combs$N))]
-  #   # helpVec[!is.na(helpVec)] <- 1
-  #   dt <- data.table::data.table(matrix(helpVec, nrow = 10, ncol = 10, byrow = TRUE))
-  #
-  #   DT::datatable(dt, selection = list(mode = 'single', target = 'cell'),
-  #                 filter = "none", autoHideNavigation = TRUE, rownames = TRUE,
-  #                 escape = FALSE, style = "default", class = 'cell-border',
-  #                 options = list(pageLength = 10,
-  #                                dom = 't',
-  #                                ordering = FALSE,
-  #                                initComplete = JS(
-  #                                  "function(settings, json) {",
-  #                                  "$(this.api().table().header()).css({'background-color': '#989898',
-  #                                'color': '#fff'});",
-  #                                  "}"))) %>%
-  #     formatStyle(names(dt),
-  #                 color = "#f2da64",
-  #                 backgroundColor = "#f2da64",
-  #                 # background = DT::styleColorBar(c(0, 1),
-  #                 #                                '#f2da64', angle = 270),
-  #                 backgroundSize = '90% 80%',
-  #                 backgroundRepeat = 'no-repeat',
-  #                 backgroundPosition = 'center') %>%
-  #     formatRound(names(dt),  digits = 0)
-  # })
-  #
-  # output$portGRID2 <- renderFormattable({
-  #
-  #   combs <- SKU_choice_DT()[, .(.N), by = .(Att1, Att2, Att3, Att4, Att5, Att6, Att7, Att8)][order(-N)]
-  #
-  #   helpVec <- rep(NA, 100)
-  #   helpVec[1:min(100, length(combs$N))] <- sort(combs$N, decreasing = TRUE)[1:min(100, length(combs$N))]
-  #   # helpVec[!is.na(helpVec)] <- 1
-  #   helpVec[is.na(helpVec)] <- 0
-  #   dt <- data.table::data.table(matrix(helpVec, nrow = 10, ncol = 10, byrow = TRUE))
-  #
-  #   formattable(dt, list(
-  #     V1 = color_tile("#f2da64", "#f2da64"),
-  #     V2 = color_tile("#f2da64", "#f2da64"),
-  #     V3 = color_tile("#f2da64", "#f2da64"),
-  #     V4 = color_tile("#f2da64", "#f2da64"),
-  #     V5 = color_tile("#f2da64", "#f2da64"),
-  #     V6 = color_tile("#f2da64", "#f2da64"),
-  #     V7 = color_tile("#f2da64", "#f2da64"),
-  #     V8 = color_tile("#f2da64", "#f2da64"),
-  #     V9 = color_tile("#f2da64", "#f2da64"),
-  #     V10 = color_tile("#f2da64", "#f2da64")
-  #   ))
-  #
-  # })
 
   # Log-out button - leave at end
   observeEvent(input$logout, {
