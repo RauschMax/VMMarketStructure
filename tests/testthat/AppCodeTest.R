@@ -455,6 +455,7 @@ lapply(Imp_ordered$LevCount, round, digits = 3)
 # SKU_choice_DT <- reactive({
 # Alternative SKU_choice_DT !-------------------------------------------------------------------------------------------
 # NA --> 0 instead of expand.grid(x)
+system.time({
 SKU_choice_2 <- lapply(Data$ID,
                        function(x) {
                          DataHelp <- Data[Data$ID == x, grep("^A", names(Data)), with = FALSE]
@@ -481,7 +482,10 @@ SKU_choice_2 <- lapply(Data$ID,
                          out
 
                        })
+})
 
+# User      System verstrichen
+# 5.98        0.27        6.25
 
 SKU_choice_DT_ALTERNATIVE <- rbindlist(SKU_choice_2)
 
@@ -766,10 +770,10 @@ segProfileDT <- rbindlist(
            out <- dcast(segsInclLC, get(selCol) ~ get(LCselected), value.var = 'ID', length)
            out[, Seg := name]
            setnames(out, "selCol", "Segment")
-           names(out1) <- c("Level",
-                            paste0("LC", sequence(as.numeric(input$segSelect))),
-                            "Attribute")
-           out[, mget(c("Seg", "Segment", as.character(sequence(as.numeric(input$segSelect)))))]
+           names(out) <- c("Seg",
+                           paste0("LC", sequence(as.numeric(input$segSelect))),
+                           "Segment")
+           out[, mget(c("Seg", "Segment", paste0("LC", sequence(as.numeric(input$segSelect)))))]
          }))
 segProfileDT
 
@@ -823,6 +827,7 @@ str(SKU_choice_2[[1]])
 names(SKU_choice_2[[1]])
 SKU_choice_2[[1]][, "Att1"]
 
+system.time({
 DemandList <- lapply(SKU_choice_2,
                      function(i) {
                        Importance_scaled <- Importance$Importance * (sapply(i[, mget(paste0("Att", 1:length(nlev)))],
@@ -876,6 +881,10 @@ DemandList <- lapply(SKU_choice_2,
 
                        help_DT
                      })
+})
+
+# User      System verstrichen
+# 11.96        0.11       12.20
 
 names(DemandList) <- Data[, ID]
 DemandList[1:5]
@@ -893,6 +902,7 @@ selIndex <- DemandList[[1]][, rowSums(sapply(1:length(nlev),
 
 DemandList[[1]][selIndex]
 
+system.time({
 demandAnalysis <- lapply(DemandList,
                          function(x) {
                            helpDT_in <- copy(x)
@@ -923,6 +933,10 @@ demandAnalysis <- lapply(DemandList,
                                 nComp = nrow(compHelp),
                                 nConcepts = nrow(helpDT_in))
                          })
+})
+# User      System verstrichen
+# 2.37        0.19        2.64
+
 names(demandAnalysis) <- Data[, ID]
 demandAnalysis[1:2]
 demandAnalysis[[2]]
@@ -982,6 +996,7 @@ stratRotation <- lapply(seq_along(selectedLevels),
                           })
 stratRotation
 
+system.time({
 stratDemand <- sapply(stratRotation,
                       function(i) {
                         sapply(i,
@@ -999,7 +1014,9 @@ stratDemand <- sapply(stratRotation,
                                  mean(Demand_DT[selIndexDT, ][, max(demand), by = ID][, V1]) - demand_selected
                                })
                       })
-
+})
+# User      System verstrichen
+# 1.72        0.44        2.23
 stratDemand
 
 stratDT <- data.table(attricute = rep(names(defIN$attLev), defIN$nlev),

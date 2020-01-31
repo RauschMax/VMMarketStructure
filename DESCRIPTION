@@ -10,6 +10,7 @@ URL: https://kantarware.visualstudio.com/KT-BeastRepo/_git/VMMarketStructure
 BugReports: https://kantarware.visualstudio.com/KT-BeastRepo/_backlogs/Iteration/VMMarketStructure
 Encoding: UTF-8
 LazyData: true
+Depends: R (>= 3.4.3)
 Imports: testthat,
     shiny,
     shinydashboard,
