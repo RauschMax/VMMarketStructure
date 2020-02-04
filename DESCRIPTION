@@ -23,7 +23,11 @@ Imports: testthat,
     DT,
     treemap,
     gridExtra,
-    shinyWidgets
+    shinyWidgets,
+    BeastRServer,
+    httr,
+    htmlwidgets
 KTRemotes: KTShiny,
-    kantardashboard
+    kantardashboard,
+    BeastRServer
 RoxygenNote: 6.0.1
