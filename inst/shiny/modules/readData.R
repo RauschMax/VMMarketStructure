@@ -337,7 +337,9 @@ segIN <- reactive({
 
   segFactor[, (factorVars) := lapply(seq_along(.SD),
                                      function(x) {
+                                       levs <- seq_along(segDefIN()$segLev[[which(segDefIN()$segCode == "factor")[x]]])
                                        factor(.SD[[x]],
+                                              levels = levs,
                                               labels = segDefIN()$segLev[[which(segDefIN()$segCode == "factor")[x]]])
                                      }),
             .SDcols = factorVars]

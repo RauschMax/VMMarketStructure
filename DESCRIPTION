@@ -26,7 +26,8 @@ Imports: testthat,
     shinyWidgets,
     BeastRServer,
     httr,
-    htmlwidgets
+    htmlwidgets,
+    grDevices
 KTRemotes: KTShiny,
     kantardashboard,
     BeastRServer

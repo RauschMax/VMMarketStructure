@@ -1,5 +1,5 @@
 rm(list = ls())
-setwd("C:/03_RAND/Analyse_R/11_Git/VMMarketStructure/tests/testthat")
+setwd("J:/Proj/CAPR/AKT/316401556_Red_Bull_Pricer_FRANCE/data/MarketStructure")
 
 ####Packages####
 library(shiny)
@@ -14,7 +14,7 @@ library(treemap)
 library(ggplot2)
 #Add all required packages here
 
-input <- list(study = "316401010")
+input <- list(study = "316401556")
 # input <- list(study = "316401010b")
 
 ## START - Code "readData.R" !------------------------------------------------------------------------------------------

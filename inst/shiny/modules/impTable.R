@@ -161,7 +161,7 @@ chosenIDs <- reactive({
                                    }
                                  })
 
-      validSegSel <- rowSums(Reduce(cbind, segSelectionList)) > 0
+      validSegSel <- apply(Reduce(cbind, segSelectionList), 1, all)
     }
 
     # Level Selection
@@ -186,7 +186,7 @@ chosenIDs <- reactive({
                                    }
                                  })
 
-      validLevelSel <- rowSums(Reduce(cbind, LevSelectionList)) > 0
+      validLevelSel <- apply(Reduce(cbind, segSelectionList), 1, all)
     }
 
     # Combine Level AND Segment Selection
