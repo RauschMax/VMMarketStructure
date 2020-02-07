@@ -170,23 +170,23 @@ ui <- kantarPage(
           #
           #   tooltip = tooltipOptions(title = "Click to select segmentation!")
           # ),
-          tabPanel(
-            title = 'Segment Profile',
-            navlistPanel(
-              "Select Profile Variables...",
-              tabPanel("Factor Variables", kantarBox(div(style = "height:70vh;",
-                                             plotOutput("profileFactors",
-                                                        height = "100%")),
-                                             width = 12)),
-              # tabPanel("Numeric Variables", kantarBox(div(style = "height:80vh;",
-              #                                   plotOutput("profileNumeric",
-              #                                              height = "100%")),
-              #                                   width = 12)),
-              tabPanel("Choices", kantarBox(div(style = "height:80vh;",
-                                                plotOutput("profileChoices",
-                                                           height = "100%")),
-                                            width = 12)),
-              well = FALSE, widths = c(2, 10), id = "SegNavList")),
+          # tabPanel(
+          #   title = 'Segment Profile',
+          #   navlistPanel(
+          #     "Select Profile Variables...",
+          #     tabPanel("Factor Variables", kantarBox(div(style = "height:70vh;",
+          #                                    plotOutput("profileFactors",
+          #                                               height = "100%")),
+          #                                    width = 12)),
+          #     # tabPanel("Numeric Variables", kantarBox(div(style = "height:80vh;",
+          #     #                                   plotOutput("profileNumeric",
+          #     #                                              height = "100%")),
+          #     #                                   width = 12)),
+          #     tabPanel("Choices", kantarBox(div(style = "height:80vh;",
+          #                                       plotOutput("profileChoices",
+          #                                                  height = "100%")),
+          #                                   width = 12)),
+          #     well = FALSE, widths = c(2, 10), id = "SegNavList")),
           tabPanel(
             title = 'Segment Profile Tables',
             kantarBox(div(style = "overflow-y: scroll; height:80vh; font-size:80%;",

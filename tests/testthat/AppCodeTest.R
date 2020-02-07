@@ -14,8 +14,8 @@ library(treemap)
 library(ggplot2)
 #Add all required packages here
 
-input <- list(study = "316401556")
-# input <- list(study = "316401010b")
+# input <- list(study = "316401556")
+input <- list(study = "316401010")
 
 ## START - Code "readData.R" !------------------------------------------------------------------------------------------
 ##
@@ -891,6 +891,9 @@ DemandList[1:5]
 DemandList[[1]]
 
 (Demand_DT <- rbindlist(DemandList)[, mget(c("ID", paste0("Var", 1:length(nlev)), "demand"))])
+
+# write demand DT !-----------------------------------------------------------------------------------------------------
+fwrite(Demand_DT, file = "appData/demand.csv")
 
 selectedLevels <- c(1, 1, 1, 1, 1, 1, 1, 1)
 
