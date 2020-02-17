@@ -2,7 +2,6 @@
 library(shiny)
 library(shinydashboard)
 library(kantardashboard)
-library(KTShiny)
 library(formattable)
 library(networkD3)
 library(treemap)

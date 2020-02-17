@@ -16,7 +16,6 @@ Imports: testthat,
     shiny,
     shinydashboard,
     kantardashboard,
-    KTShiny,
     networkD3,
     data.table,
     formattable,
@@ -28,7 +27,6 @@ Imports: testthat,
     httr,
     htmlwidgets,
     grDevices
-KTRemotes: KTShiny,
-    kantardashboard,
+KTRemotes: kantardashboard,
     BeastRServer
 RoxygenNote: 6.0.1
