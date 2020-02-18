@@ -42,7 +42,8 @@ output$decMatUI <- renderUI({
          function(x) {
            id <- paste0("decMat", x)
            div(style = "font-size: 10px; width:99%",
-               h6(div(style = "font-weight:bold; display:inline-block;", toupper(names(Imp_ordered()$LevCount)[x])),
+               h6(div(style = "font-weight:bold; display:inline-block;",
+                      toupper(names(Imp_ordered()$LevCount)[x])),
                   ": ",
                   format(round(Imp_ordered()$Imp[x], 3) * 100, nsmall = 1)),
                DT::dataTableOutput(id)
@@ -217,22 +218,3 @@ output$testDecHier <- renderPrint({
   diagramData()
 
 })
-
-# output$selComb <- renderUI({
-#
-#   tags$table(style = "font-size:10px; width:100%;",
-#              lapply(seq_along(Imp_ordered()$LevCount),
-#                     function(x) {
-#                       IDselected <- paste0("decMat", x, "_columns_selected")
-#                       tags$tr(
-#                         tags$td(style = "font-size:10px; padding-right:10px;",
-#                                 h6(toupper(names(Imp_ordered()$LevCount)[x]))
-#                         ),
-#                         tags$td(style = "font-size:12px; padding-right:10px;",
-#                                 Imp_ordered()$attLev_ordered[[x]][input[[IDselected]] + 1])
-#                         )
-#                     }
-#              )
-#   )
-#
-# })

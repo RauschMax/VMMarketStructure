@@ -4,7 +4,7 @@
 pw <- eventReactive(input$go, {
 
   validate(
-    need(!is.null(input$study), "Wait for it!")
+    need(!is.null(input$study), "Please load Study with StudyID and password!")
   )
 
   get_pw <- BeastRServer::azure_blob_call("GET",
@@ -27,7 +27,7 @@ pw <- eventReactive(input$go, {
 def <- eventReactive(input$go, {
 
   validate(
-    need(!is.null(input$study), "Wait for it!")
+    need(!is.null(input$study), "Please load Study with StudyID and password!")
   )
 
   if (isolate(input$pw) == isolate(pw())) {
@@ -49,7 +49,7 @@ def <- eventReactive(input$go, {
 dataIN <- eventReactive(input$go, {
 
   validate(
-    need(input$study, "Wait for it!")
+    need(input$study, "Please load Study with StudyID and password!")
   )
 
   validate(
@@ -84,15 +84,66 @@ dataUSED <- reactive({
 
 })
 
+# chosen combinations per respondent
+SKU_choice_DT <- eventReactive(input$go, {
+
+  validate(
+    need(input$study, "Please load Study with StudyID and password!")
+  )
+
+  validate(
+    need(pw(), "Please enter correct password!")
+  )
+
+  if (isolate(input$pw) == isolate(pw())) {
+    get_combs <- BeastRServer::azure_blob_call("GET",
+                                               storage_account = "shinyapp",
+                                               storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
+                                                                    "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
+                                                                    "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
+                                               container = paste0("ms", input$study),
+                                               blob = "comb.csv")
+
+    SKU_choice_DT <- data.table(httr::content(get_combs, type = "text/csv", encoding = "UTF-8"))
+    rm(get_combs)
+    SKU_choice_DT
+  }
+})
+
+# demand data.table
+Demand_DT <- eventReactive(input$go, {
+
+  validate(
+    need(input$study, "Please load Study with StudyID and password!")
+  )
+
+  validate(
+    need(pw(), "Please enter correct password!")
+  )
+
+  if (isolate(input$pw) == isolate(pw())) {
+    get_demand <- BeastRServer::azure_blob_call("GET",
+                                                storage_account = "shinyapp",
+                                                storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
+                                                                     "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
+                                                                     "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
+                                                container = paste0("ms", input$study),
+                                                blob = "demand.csv")
+    Demand_DT <- data.table(httr::content(get_demand, type = "text/csv", encoding = "UTF-8"))
+    rm(get_demand)
+    Demand_DT
+  }
+})
+
 # choices, combinations and ranks
 lc_segs <- eventReactive(input$go, {
 
   validate(
-    need(input$study, "Wait for it!")
+    need(input$study, "Please load Study with StudyID and password!")
   )
 
   validate(
-    need(pw(), "Wait for it!")
+    need(pw(), "Please enter correct password!")
   )
 
   if (isolate(input$pw) == isolate(pw())) {
@@ -117,11 +168,11 @@ lc_segs <- eventReactive(input$go, {
 segments <- eventReactive(input$go, {
 
   validate(
-    need(input$study, "Wait for it!")
+    need(input$study, "Please load Study with StudyID and password!")
   )
 
   validate(
-    need(pw(), "Wait for it!")
+    need(pw(), "Please enter correct password!")
   )
 
   if (isolate(input$pw) == isolate(pw())) {
@@ -148,7 +199,7 @@ segments <- eventReactive(input$go, {
 segDef <- eventReactive(input$go, {
 
   validate(
-    need(!is.null(input$study), "Wait for it!")
+    need(!is.null(input$study), "Please load Study with StudyID and password!")
   )
 
   if (isolate(input$pw) == isolate(pw())) {
@@ -168,46 +219,15 @@ segDef <- eventReactive(input$go, {
 })
 
 
-# # choices, combinations and ranks
-# comb <- eventReactive(input$go, {
-#
-#   validate(
-#     need(input$study, "Wait for it!")
-#   )
-#
-#   # validate(
-#   #   need(pw(), "Wait for it!")
-#   # )
-#   #
-#   # if (isolate(input$pw) == isolate(pw())) {
-#   #   get_comb <- BeastRServer::azure_blob_call("GET",
-#   #                                             storage_account = "shinyapp",
-#   #                                             storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
-#   #                                                                  "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
-#   #                                                                  "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
-#   #                                             container = paste0("ms", input$study),
-#   #                                             blob = "comb.csv")
-#   #
-#   #   comb <- as.data.table(httr::content(get_comb, type = "text/csv", encoding = "UTF-8"))
-#   #
-#   #   print("combs read")
-#   #   comb
-#   # }
-#
-#   print("combs read")
-#
-#
-# })
-
 # choices, combinations and ranks
 orderIN <- eventReactive(input$go, {
 
   validate(
-    need(input$study, "Wait for it!")
+    need(input$study, "Please load Study with StudyID and password!")
   )
 
   validate(
-    need(pw(), "Wait for it!")
+    need(pw(), "Please enter correct password!")
   )
 
   if (isolate(input$pw) == isolate(pw())) {
@@ -225,6 +245,36 @@ orderIN <- eventReactive(input$go, {
     lapply(orderIN, unlist)
   }
 
+})
+
+# existing SKUs
+SKUinput <- eventReactive(input$go, {
+
+  validate(
+    need(!is.null(input$study), "Please load Study with StudyID and password!")
+  )
+
+  validate(
+    need(defIN(), "Wait for def file to be extracted!")
+  )
+
+  if (isolate(input$pw) == isolate(pw())) {
+    get_SKUs <- BeastRServer::azure_blob_call("GET",
+                                              storage_account = "shinyapp",
+                                              storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
+                                                                   "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
+                                                                   "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
+                                              container = paste0("ms", input$study),
+                                              blob = "existingSKUs.csv")
+    SKUinput <- data.table(httr::content(get_SKUs, type = "text/csv", encoding = "UTF-8"))
+    rm(get_SKUs)
+
+    names(SKUinput) <- c("Portfolio", "SKU",
+                         paste0("A", rep(seq_along(defIN()$nlev),
+                                         defIN()$nlev), "_",
+                                sequence(defIN()$nlev)))
+    SKUinput
+  }
 })
 # DATA READ COMPLETED !-----------------------------------------------------------------------------------------------
 
@@ -307,20 +357,6 @@ segDefIN <- reactive({
 
 
 # EXCTRACT DATA !-----------------------------------------------------------------------------------------------------
-
-# # choice data
-# dataIN <- reactive({
-#
-#   validate(
-#     need(comb(), "Wait for it!")
-#   )
-#
-#   SKU_choice_DT <- comb()
-#
-#   list(SKU_choice_DT = SKU_choice_DT,
-#        Data = Data)
-#
-# })
 
 segIN <- reactive({
 
@@ -490,57 +526,4 @@ Imp_ordered <- reactive({
 
 })
 
-SKU_choice_DT <- reactive({
-  # Alternative SKU_choice_DT !-----------------------------------------------------------------------------------------
-  # NA --> 0 instead of expand.grid(x)
-  SKU_choice_2 <- lapply(dataUSED()$ID,
-                         function(x) {
-                           dataHelp <- dataUSED()[dataUSED()$ID == x, grep("^A", names(dataUSED())), with = FALSE]
-
-                           chosenLevels <- lapply(1:length(defIN()$nlev),
-                                                  function(y) {
-                                                    outHelp <- which(dataHelp[, grep(paste0("^A", y, "_"),
-                                                                                     names(dataHelp)),
-                                                                              with = FALSE] == 1)
-                                                    if (length(outHelp) == 0) {
-                                                      0
-                                                    } else {
-                                                      outHelp
-                                                    }
-                                                  })
-
-                           out <- data.table(ID = x, expand.grid(chosenLevels))
-                           names(out) <- c("ID", paste0("Att", 1:length(defIN()$nlev)))
-
-                           out$Comb <- gsub("NA", "_", apply(out[, -1], 1,
-                                                             paste0,
-                                                             collapse = ""))
-
-                           out
-
-                         })
-
-
-  SKU_choice_DT_ALTERNATIVE <- rbindlist(SKU_choice_2)
-
-  SKU_choice_DT_ALTERNATIVE[order(ID)]
-
-  list(SKU_choice_DT = SKU_choice_DT_ALTERNATIVE,
-       SKU_choice = SKU_choice_2)
-
-})
-
-# # choice frequencies for combinations
-# SKU_comb_freq <- reactive({
-#
-#   # list(SKU_choice_freq = SKU_choice_DT[, .(.N), by = .(Comb)][order(-N)],
-#   #      SKUs_per_person = SKU_choice_DT[, lapply(.SD, list), by = ID,
-#   #                                      .SDcols = "Comb"])
-#
-#   SKUs_per_person <- SKU_choice_DT()[, lapply(.SD, list), by = ID,
-#                                      .SDcols = "Comb"]
-#
-#   SKUs_per_person
-#
-# })
 # DATA extracted !------------------------------------------------------------------------------------------------------

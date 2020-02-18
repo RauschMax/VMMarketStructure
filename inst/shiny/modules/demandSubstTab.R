@@ -22,116 +22,36 @@ output$attLev <- renderUI({
 
 ## Demand !----
 
-DemandList <- reactive({
-
-  Data <- dataUSED()
-
-  DemandList <- lapply(SKU_choice_DT()$SKU_choice,
-         function(i) {
-           Importance_scaled <- Importance()$Importance * (sapply(i[, mget(paste0("Att", 1:length(defIN()$nlev)))],
-                                                                max) != 0)
-
-           Importance_scaled <- Importance_scaled / sum(Importance_scaled)
-
-
-           IndChoHelp <- lapply(seq_along(defIN()$nlev),
-                                function(x) {
-                                  (tabulate(i[, get(paste0("Att", x))],
-                                            nbins = defIN()$nlev[x]) != 0) * Importance_scaled[x]
-                                })
-
-           helpInd <- sapply(IndChoHelp,
-                             function(x) {
-                               out <- which(x != 0)
-
-                               if (length(out) > 0) {
-                                 c(0, out)
-                               } else {
-                                 NA
-                               }
-                             })
-
-           if (length(unique(i[, ID])) != 1) {break}
-
-           help_DT <- data.table(ID = i[1, ID],
-                                 expand.grid(helpInd))
-
-           help_DT[, c(paste0("Val", seq_along(defIN()$nlev))) := lapply(seq_along(defIN()$nlev),
-                                                                 function(x) {
-                                                                   varIter <- .SD[[x]]
-                                                                   sapply(varIter,
-                                                                          function(y) {
-                                                                            if (any(is.na(y))) {
-                                                                              out <- NA
-                                                                            } else {
-                                                                              out <- IndChoHelp[[x]][y]
-                                                                              if (length(out) > 0) {
-                                                                                out
-                                                                              } else {
-                                                                                0
-                                                                              }
-                                                                            }
-                                                                          })
-                                                                 }),
-                   .SDcols = paste0("Var", seq_along(defIN()$nlev))]
-
-           help_DT[, demand := rowSums(.SD, na.rm = TRUE), .SDcols = paste0("Val", seq_along(defIN()$nlev))]
-
-           help_DT
-         })
-
-  names(DemandList) <- Data[, ID]
-
-  Demand_DT <- rbindlist(DemandList)[, mget(c("ID", paste0("Var", 1:length(defIN()$nlev)), "demand"))]
-
-  list(DemandList = DemandList,
-       Demand_DT = Demand_DT)
-
-})
-
 demandAnalysis <- reactive({
-
-  Data <- dataUSED()
 
   selectedLevels <- sapply(1:length(defIN()$nlev),
          function(i) {
            as.numeric(input[[paste0("ShowAtt", i)]])
          })
 
-  demandAnalysis <- lapply(DemandList()$DemandList,
-                           function(x) {
-                             helpDT_in <- copy(x)
-                             helpDT_in[, c(paste0("Val", seq_along(defIN()$nlev))) := NULL]
+  selIndex_DT <- Demand_DT()[, rowSums(sapply(1:length(defIN()$nlev),
+                                            function(x) {
+                                              .SD[[x]] %in% c(NA, 0, selectedLevels[x])
+                                            }
+  )) == length(defIN()$nlev),
+  .SDcols = paste0("Var", 1:length(defIN()$nlev))]
 
-                             selIndex <- helpDT_in[, rowSums(sapply(1:length(defIN()$nlev),
-                                                                    function(x) {
-                                                                      .SD[[x]] %in% c(NA, 0, selectedLevels[x])
-                                                                    })
-                                                             ) == length(defIN()$nlev),
-                                                   .SDcols = paste0("Var", 1:length(defIN()$nlev))]
+  mean(Demand_DT()[selIndex_DT, ][, max(demand), by = ID][, V1])
+  demandSelected <- Demand_DT()[Demand_DT()[selIndex_DT, ][, max(demand), by = ID], on = "ID"]
 
-                             if (any(selIndex)) {
-                               helpDT <- helpDT_in[selIndex]
-                               demandHelp <- max(helpDT[, demand])
-                             } else {
-                               helpDT <- NA
-                               demandHelp <- 0
-                             }
+  demandSummary <- Demand_DT()[selIndex_DT, ][, max(demand), by = ID]
+  demandSummary[is.na(V1), V1 := 0]
+  demandSummary <- demandSelected[demand > V1, .N, by = ID][demandSummary, on = "ID"]
+  demandSummary[is.na(N), N := 0]
+  demandSummary <- demandSummary[demandSelected[, .N, by = ID], on = "ID"]
+  demandSummary[is.na(i.N), i.N := 0]
+  setnames(demandSummary, c("V1", "N", "i.N"), c("Demand", "nComp", "nConc"))
+  demandSummary <- demandSummary[, .(ID, Demand, nComp, nConc)]
+  demandSummary[, CompRatio := nComp / nConc]
 
-                             compHelp <- helpDT_in[demand > demandHelp]
-                             compHelp
-
-                             list(demand = demandHelp,
-                                  DT = helpDT,
-                                  competitors = compHelp,
-                                  nComp = nrow(compHelp),
-                                  nConcepts = nrow(helpDT_in))
-                           })
-
-  names(demandAnalysis) <- Data[, ID]
-
-  demandAnalysis
-
+  list(demandSelected = demandSelected,
+       demandSummary = demandSummary,
+       means = colMeans(demandSummary))
 })
 
 output$demandBox <- renderValueBox({
@@ -140,10 +60,7 @@ output$demandBox <- renderValueBox({
     need(demandAnalysis(), "demand is being calculated")
   )
 
-  demand <- mean(sapply(demandAnalysis(),
-                        function(x) {
-                          x$demand
-                        }))
+  demand <- demandAnalysis()$means["Demand"]
 
   valueBox(value = format(round(demand, 3) * 100, nsmall = 1),
            subtitle = "Demand of selected product",
@@ -158,15 +75,28 @@ output$compBox <- renderValueBox({
     need(demandAnalysis(), "demand is being calculated")
   )
 
-  nComp <- mean(sapply(demandAnalysis(),
-                       function(x) {
-                         x$nComp
-                       }))
+  nComp <- demandAnalysis()$means["nComp"]
 
   valueBox(value = round(nComp, 0),
            subtitle = "Mean number of competitor products",
            color = "aqua",
            icon = icon("bolt"))
+})
+
+
+## Incrementality !----
+output$uniquenessBox <- renderValueBox({
+
+  validate(
+    need(demandAnalysis(), "demand is being calculated")
+  )
+
+  uniqueness <- 1 - demandAnalysis()$means["CompRatio"]
+
+  valueBox(value = format(round(uniqueness, 3) * 100, nsmall = 1),
+           subtitle = "Uniqueness of the product",
+           color = "yellow",
+           icon = icon("star-o"))
 })
 
 
@@ -190,25 +120,6 @@ output$compBox <- renderValueBox({
 #            icon = icon("shopping-basket"))
 # })
 
-
-## Incrementality !----
-output$uniquenessBox <- renderValueBox({
-
-  validate(
-    need(demandAnalysis(), "demand is being calculated")
-  )
-
-  uniqueness <- mean(sapply(demandAnalysis(),
-                            function(x) {
-                              1 - (x$nComp / x$nConcepts)
-                            }))
-
-  valueBox(value = format(round(uniqueness, 3) * 100, nsmall = 1),
-           subtitle = "Uniqueness of the product",
-           color = "yellow",
-           icon = icon("star-o"))
-})
-
 # output$demandHist <- renderPlot({
 #
 #   df_demand <- data.table(demand = sapply(demandAnalysis(),
@@ -231,10 +142,7 @@ output$strategyProfile <- DT::renderDataTable({
     need(lc_segs(), "Please load the data.")
   )
 
-  demand_selected <- mean(sapply(demandAnalysis(),
-                                 function(x) {
-                                   x$demand
-                                 }))
+  demand_selected <- demandAnalysis()$means["Demand"]
 
   selectedLevels <- sapply(1:length(defIN()$nlev),
                            function(i) {
@@ -256,14 +164,15 @@ output$strategyProfile <- DT::renderDataTable({
                           sapply(i,
                                  function(j) {
                                    selectedLevels <- j
-                                   selIndexDT <- DemandList()$Demand_DT[, rowSums(sapply(1:length(defIN()$nlev),
-                                                                            function(x) {
-                                                                              .SD[[x]] %in% c(NA, 0, selectedLevels[x])
-                                                                            }
+                                   selIndexDT <- Demand_DT()[, rowSums(sapply(1:length(defIN()$nlev),
+                                                                              function(x) {
+                                                                                .SD[[x]] %in% c(NA, 0,
+                                                                                                selectedLevels[x])
+                                                                              }
                                    )) == length(defIN()$nlev),
                                    .SDcols = paste0("Var", 1:length(defIN()$nlev))]
 
-                                   mean(DemandList()$Demand_DT[selIndexDT, ][, max(demand), by = ID][, V1]) -
+                                   mean(Demand_DT()[selIndexDT, ][, max(demand), by = ID][, V1]) -
                                      demand_selected
                                  })
                         })
@@ -312,5 +221,5 @@ output$strategyProfile <- DT::renderDataTable({
 })
 
 output$testDemand <- renderPrint({
-  "HI THERE"
+  demandAnalysis()
 })

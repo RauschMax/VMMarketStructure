@@ -7,6 +7,7 @@ library(DT)
 library(formattable)
 library(networkD3)
 library(treemap)
+library(sparkline)
 #Add all required packages here
 
 ####Active Directory####
@@ -31,38 +32,36 @@ server <- function(input, output, session) {
   source("./modules/impTable.R",
          local = TRUE)$value
 
-  ## Importance Diagrams - Sankey, Treemap
-  source("./modules/impDiagrams.R",
+  ## Demand & Substitution Table
+  source("./modules/demandSubstTab.R",
+         local = TRUE)$value
+
+  ## Segmentation Tab
+  source("./modules/profileTab.R",
          local = TRUE)$value
 
   ## Segmentation Tab
   source("./modules/segTab.R",
          local = TRUE)$value
 
-  ## Demand & Substitution Table
-  source("./modules/demandSubstTab.R",
-         local = TRUE)$value
+  # ## Importance Diagrams - Sankey, Treemap
+  # source("./modules/impDiagrams.R",
+  #        local = TRUE)$value
 
-  ## Substitution Table
-  source("./modules/substTable.R",
-         local = TRUE)$value
+  # ## Substitution Table
+  # source("./modules/substTable.R",
+  #        local = TRUE)$value
 
   # MODULES LOADED !----------------------------------------------------------------------------------------------------
 
 
   output$test <- renderPrint({
 
-    list(names(session$clientData),
+    list(dataUSED(),
+         selectionSize(),
+         names(session$clientData),
          session$clientData$pixelratio,
          session$clientData$url_search)
-
-
-  })
-
-  output$test2 <- renderPrint({
-
-    list(dataUSED(),
-         selectionSize())
 
   })
 

@@ -8,6 +8,7 @@ library(treemap)
 library(shinyWidgets)
 library(ggplot2)
 library(gridExtra)
+library(sparkline)
 #Add all required packages here
 
 ####Active Directory####
@@ -71,8 +72,11 @@ ui <- kantarPage(
   sidebar = sidebarMenu(
     menuItem(tabName = 'home', text = 'Overview', icon = icon('eye'), selected = TRUE),
     menuItem(tabName = 'decision', text = 'Decision Hierarchy', icon = icon('sort-amount-desc')),
-    menuItem(tabName = 'buyseg', text = 'Segmentation of Buyers', icon = icon('users')),
-    menuItem(tabName = 'demand', text = 'Demand & Substitution', icon = icon('shopping-basket'))
+    menuItem(tabName = 'demand', text = 'Demand', icon = icon('shopping-basket')),
+    menuItem(tabName = 'profile', text = 'Profiling', icon = icon('users')),
+    menuItem(tabName = 'buyseg', text = 'Segmentation', icon = icon('filter')),
+    menuItem(tabName = 'expansion', text = 'Expansion', icon = icon('expand')),
+    menuItem(tabName = 'contract', text = 'Contraction', icon = icon('compress'))
     # ,
     # menuItem(tabName = 'portfolio', text = 'Portfolio Rankings', icon = icon('trophy'))
   ),
@@ -115,86 +119,91 @@ ui <- kantarPage(
         tabName = 'home',
         h2("HOME TAB"),
         # kantarBox(uiOutput("attLev")),
-        kantarBox(verbatimTextOutput("test2"))
+        kantarBox(verbatimTextOutput("test"))
       ),
 
 
       tabItem(
         tabName = 'decision',
-        tabBox(
-            tabPanel(
-              title = 'Decision Matrix',
-              div(style = "overflow-y:scroll; overflow-x:auto;
+        kantarBox(div(style = "overflow-y:scroll; overflow-x:auto;
                            height:72vh; font-size:80%; margin-bottom:10px;",
-                  uiOutput("decMatUI")
-              )),
-            tabPanel(
-              title = 'Decision Sankey',
-              div(style = "height:72vh; margin-bottom:10px;",
-                  sankeyNetworkOutput("Sankey"))
-            ), width = 12),
+                      uiOutput("decMatUI")), width = 12),
         kantarBox(uiOutput("selSegment"), br(), width = 5),
         kantarBox(uiOutput("selLevel"), br(), width = 5),
-        valueBoxOutput("selectionSizeBox", width = 2),
-        verbatimTextOutput("testDecHier")
-
-        # style = "overflow-y:scroll; overflow-x:auto; height:15vh;",
-
+        valueBoxOutput("selectionSizeBox", width = 2)
         # ,
-        # kantarBox(title = "Selected Combination",
-        #   uiOutput("selComb"),
-        #   width = 4),
-        # valueBoxOutput("demandBox", width = 4),
-        # valueBoxOutput("supplyBox", width = 4),
-        # valueBoxOutput("incrementBox", width = 4),
-        # kantarBox(
-        #   div(style = "overflow-y:scroll; overflow-x:scroll;
-        #                height:42vh; width:100%; font-size:80%",
-        #       verbatimTextOutput("test2")),
-        #   width = 4)
+        # verbatimTextOutput("testDecHier")
+
+      ),
+
+
+      tabItem(
+        tabName = 'demand',
+        fluidRow(
+          column(
+            tabsetPanel(
+              tabPanel(
+                title = "Demand Overview",
+                fluidRow(valueBoxOutput("demandBox", width = 4),
+                         valueBoxOutput("compBox", width = 4),
+                         valueBoxOutput("uniquenessBox", width = 4),
+                         width = 12),
+                kantarBox("?? ScatterPlot - Demand vs. Number of better options",
+                          width = 12)),
+              tabPanel(
+                title = "Demand Strategy",
+                div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
+                    DT::dataTableOutput("strategyProfile"))
+              )
+            ),
+            width = 8),
+          column(kantarBox(uiOutput("attLev"),
+                           title = "Select a Product",
+                           width = 12),
+                 width = 4)
+        ),
+        br(),
+        hr(),
+        fluidRow(verbatimTextOutput("testDemand"))
+      ),
+
+
+      tabItem(
+        tabName = 'profile',
+
+        tabsetPanel(
+          tabPanel(
+            title = "Profile Single Level",
+            column(kantarBox(verbatimTextOutput("profileLevel"),
+                             title = "Profile",
+                             width = 12),
+                   width = 8),
+            kantarBox(uiOutput("selProfileLevel"),
+                      br(),
+                      title = "Select a Level",
+                      width = 4)),
+          tabPanel(
+            title = "Profile Product",
+            column(kantarBox(verbatimTextOutput("profileSKU"),
+                             title = "Profile",
+                             width = 12),
+                   width = 8),
+            kantarBox(uiOutput("attLev2"),
+                      title = "Select a Product",
+                      width = 4))
+        )
       ),
 
 
       tabItem(
         tabName = 'buyseg',
         tabsetPanel(
-          # dropdownButton(
-          #
-          #   tags$h3("List of Inputs"),
-          #
-          #   uiOutput("segSelectUI"),
-          #
-          #   circle = TRUE, status = "danger",
-          #   icon = icon("gear"), width = "300px",
-          #
-          #   tooltip = tooltipOptions(title = "Click to select segmentation!")
-          # ),
-          # tabPanel(
-          #   title = 'Segment Profile',
-          #   navlistPanel(
-          #     "Select Profile Variables...",
-          #     tabPanel("Factor Variables", kantarBox(div(style = "height:70vh;",
-          #                                    plotOutput("profileFactors",
-          #                                               height = "100%")),
-          #                                    width = 12)),
-          #     # tabPanel("Numeric Variables", kantarBox(div(style = "height:80vh;",
-          #     #                                   plotOutput("profileNumeric",
-          #     #                                              height = "100%")),
-          #     #                                   width = 12)),
-          #     tabPanel("Choices", kantarBox(div(style = "height:80vh;",
-          #                                       plotOutput("profileChoices",
-          #                                                  height = "100%")),
-          #                                   width = 12)),
-          #     well = FALSE, widths = c(2, 10), id = "SegNavList")),
           tabPanel(
             title = 'Segment Profile Tables',
             kantarBox(div(style = "overflow-y: scroll; height:80vh; font-size:80%;",
                           DT::dataTableOutput("profileSegDT"))),
             kantarBox(div(style = "overflow-y: scroll; height:80vh; font-size:80%;",
                           DT::dataTableOutput("profileChoDT")))),
-          tabPanel(
-            title = 'Personas',
-            "Segment Personas"),
           tabPanel(
               title = 'Select Segment Solution',
               column(kantarBox(width = 12,
@@ -212,38 +221,23 @@ ui <- kantarPage(
 
 
       tabItem(
-        tabName = 'demand',
-        fluidRow(
-          column(kantarBox(valueBoxOutput("demandBox", width = 4),
-                           valueBoxOutput("compBox", width = 4),
-                           valueBoxOutput("uniquenessBox", width = 4),
-                           width = 12),
-                 kantarBox(div(style = "overflow-y: scroll; height: 60vh; font-size: 80%",
-                               DT::dataTableOutput("strategyProfile")),
-                           title = "Demand Strategy Analysis",
-                           width = 12),
-                 width = 8),
-          column(kantarBox(uiOutput("attLev"),
-                           title = "Select a Product",
-                           width = 12),
-                 width = 4)
-        ),
-        fluidRow(verbatimTextOutput("testDemand"))
-
+        tabName = 'expansion',
+        kantarBox(div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
+                      "Review overall product performance: Look for demand gaps in segments", br(), br(),
+                      "Search for hypothetical new products with maximum demand and minimum portfolio overlap"),
+                  title = "Expansion",
+                  width = 12)
       ),
 
 
       tabItem(
-        tabName = 'portfolio',
-        kantarBox(div(style = "overflow-y: scroll; height: 38vh; font-size: 80%",
-                      DT::dataTableOutput("portTable")),
-                  width = 12),
-        kantarBox(div(style = "overflow-y: scroll; height: 45vh; font-size: 80%",
-                      DT::dataTableOutput("substitution"))),
-        kantarBox(div(style = "overflow-y: scroll; height: 45vh; font-size: 80%",
-                      verbatimTextOutput("test")))
-        # kantarBox(DT::dataTableOutput("portGRID")),
-        # kantarBox(formattableOutput("portGRID2"))
+        tabName = 'contract',
+        kantarBox(div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
+                      "Review overall product performance: Rank portfolio products by demand in total sample", br(), br(),
+                      "Review overall product performance: Compare products by demand in segments", br(), br(),
+                      "Count portfolio products with same or higher demand value"),
+                  title = "Contraction",
+                  width = 12)
       )
     )
   ),

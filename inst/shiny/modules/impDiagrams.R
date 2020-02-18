@@ -6,9 +6,9 @@ diagramData <- reactive({
   orderAtt <-  order(Importance()$Importance,
                      decreasing = TRUE)
 
-  DThelp <- SKU_choice_DT()$SKU_choice_DT[, c(1, grep("^Att",
-                                                      names(SKU_choice_DT()$SKU_choice_DT))[orderAtt]),
-                                          with = FALSE]
+  DThelp <- SKU_choice_DT()[, c(1, grep("^Att",
+                                        names(SKU_choice_DT()))[orderAtt]),
+                            with = FALSE]
 
   DThelp[, (names(DThelp)) := lapply(.SD,
                                      function(x) {
