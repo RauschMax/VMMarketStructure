@@ -100,6 +100,40 @@ output$uniquenessBox <- renderValueBox({
 })
 
 
+output$demandGrid <- scatterD3::renderScatterD3({
+
+  validate(
+    need(demandAnalysis(), "Awaiting data!")
+  )
+
+  # scatterplot - demand vs. uniqueness
+  plot_demand <- data.frame(demand = demandAnalysis()$means["Demand"] * 100,
+                            unique = (1 - demandAnalysis()$means["CompRatio"]) * 100,
+                            label = "Selected Product")
+
+  tooltips <- "Mouseover Text"
+
+  medianDemand <- median(demandAnalysis()$demandSelected$demand) * 100
+  medianUnique <- median(1 - demandAnalysis()$demandSummary$CompRatio) * 100
+
+  scatterD3::scatterD3(data = plot_demand, x = unique, y = demand, lab = label,
+                       labels_size = 10, colors = "#bd9b08",
+                       hover_size = 4, hover_opacity = 1,
+                       ylab = "Demand", xlab = "Uniqueness",
+                       caption = paste("Demand vs. Uniqueness;",
+                                       "Dotted lines indicate the median of each dimension."),
+                       tooltip_text = tooltips,
+                       xlim = c(0, 100), ylim = c(0, 100),
+                       # xlim = c(0, 100), ylim = c(0, max(plot_imp$TakeRate) + 10),
+                       lines = data.frame(slope = c(0, Inf, 0, Inf),
+                                          intercept = c(0, 0, medianDemand, medianUnique),
+                                          stroke_width = c(1, 1, 1, 1),
+                                          stroke = c("black", "black", "grey", "grey"),
+                                          stroke_dasharray = c(5, 5, 2, 2)))
+
+})
+
+
 # ## Supply !----
 # output$supplyBox <- renderValueBox({
 #

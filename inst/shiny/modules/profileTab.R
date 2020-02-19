@@ -51,6 +51,70 @@ output$profileLevel <- renderPrint({
 
 })
 
+output$profileLevelDT <- DT::renderDataTable({
+
+  validate(
+    need(dataUSED(), "Please load the data.")
+  )
+
+  DataInclSeg <- dataUSED()[segIN()$segFactor, on = "ID"][, mget(c("ID",
+                                                           names(dataUSED())[grep("^A", names(dataUSED()))],
+                                                           names(segIN()$segFactor)[-1]))]
+
+  levelProfileDT <- rbindlist(
+    lapply(seq_along(segDefIN()$segLevFact),
+           function(x) {
+             selCol <- names(segIN()$segFactor)[x + 1]
+             name <- names(segDefIN()$segLevFact)[x]
+
+             out <- lapply(names(dataUSED())[grep("^A", names(dataUSED()))],
+                           function(i) {
+                             help1 <- dcast(DataInclSeg, get(selCol) ~ get(i),
+                                            value.var = 'ID', length)
+
+                             if (!("1" %in% names(help1))) help1[, "1" := 0]
+
+                             help1 <- help1[, c("selCol", "1")]
+                             names(help1) <- c("seg", i)
+
+                             help1
+                           })
+
+             out <- Reduce("cbind", out)[, mget(c("seg", names(dataUSED())[grep("^A", names(dataUSED()))]))]
+
+             out[, Seg := name]
+             names(out) <- c("Segment", names(dataUSED())[grep("^A", names(dataUSED()))], "Seg")
+
+             out[, mget(c("Segment", "Seg", names(dataUSED())[grep("^A", names(dataUSED()))]))]
+           }))
+
+  levelProfileDT[, c(names(dataUSED())[grep("^A", names(dataUSED()))]) :=
+                   lapply(seq_along(.SD),
+                          function(x) {
+                            .SD[[x]] / colSums(DataInclSeg[, mget(c(names(dataUSED())[grep("^A", names(dataUSED()))]))])[x]
+                          }),
+                 .SDcols = names(dataUSED())[grep("^A", names(dataUSED()))]]
+
+
+  DT::datatable(levelProfileDT, selection = list(mode = 'single', target = 'column'),
+                filter = "none", autoHideNavigation = TRUE, rownames = FALSE,
+                extensions = 'Buttons', escape = FALSE, style = "default", class = 'compact',
+                options = list(pageLength = 20,
+                               dom = 'lrtipB',
+                               buttons = c('csv', 'excel'),
+                               initComplete = JS(
+                                 "function(settings, json) {",
+                                 "$(this.api().table().header()).css({'background-color': '#989898',
+                                   'color': '#fff'});",
+                                 "}"),
+                               lengthMenu = list(c(5, 20, -1),
+                                                 c('5', '20', 'All'))
+                )) %>%
+    DT::formatPercentage(
+      names(levelProfileDT)[-(1:2)], digits = 1)
+
+})
+
 # Select Product
 output$attLev2 <- renderUI({
 

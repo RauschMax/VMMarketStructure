@@ -90,44 +90,44 @@ output$segSelectUI <- shiny::renderUI({
 })
 
 
-output$profileFactors <- renderPlot({
-  if (is.null(input$segSelect)) {
-    LCselected <- paste0("LC", 4)
-  } else {
-    LCselected <- paste0("LC", input$segSelect)
-  }
-
-  segsInclLC <- segIN()$segFactor[lc_segs(), on = "ID"]
-
-  barplotList <- lapply(names(segIN()$segFactor)[-1],
-                        function(x) {
-                          plotData <- segsInclLC[, mget(c(x, LCselected))]
-                          plotData <- plotData[, .N, by = mget(c(x, LCselected))][order(get(names(plotData)[1]),
-                                                                                        get(LCselected))]
-
-                          plotData[, c(LCselected) := factor(get(LCselected))]
-
-                          plotData[, freq := N / sum(N) * 100, by = LCselected]
-
-                          names(plotData) <- c("group", "LC", "count", "freq")
-
-                          ggplot(plotData,
-                                 aes(fill = LC, y = freq, x = group)) +
-                            geom_bar(position = "dodge", stat = "identity") +
-                            theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 8),
-                                  axis.title.x = element_text(size = 10)) +
-                            xlab(x) + ylab(NULL)
-
-                          # barchart(freq ~ group, data = plotData, groups = LC,
-                          #          scales = list(x = list(rot = 40, cex = 0.6)))
-                        })
-
-
-  do.call(gridExtra::grid.arrange,
-          c(barplotList, ncol = min(3, ceiling((length(names(segIN()$segFactor)) - 1) / 2))))
-
-
-  })
+# output$profileFactors <- renderPlot({
+#   if (is.null(input$segSelect)) {
+#     LCselected <- paste0("LC", 4)
+#   } else {
+#     LCselected <- paste0("LC", input$segSelect)
+#   }
+#
+#   segsInclLC <- segIN()$segFactor[lc_segs(), on = "ID"]
+#
+#   barplotList <- lapply(names(segIN()$segFactor)[-1],
+#                         function(x) {
+#                           plotData <- segsInclLC[, mget(c(x, LCselected))]
+#                           plotData <- plotData[, .N, by = mget(c(x, LCselected))][order(get(names(plotData)[1]),
+#                                                                                         get(LCselected))]
+#
+#                           plotData[, c(LCselected) := factor(get(LCselected))]
+#
+#                           plotData[, freq := N / sum(N) * 100, by = LCselected]
+#
+#                           names(plotData) <- c("group", "LC", "count", "freq")
+#
+#                           ggplot(plotData,
+#                                  aes(fill = LC, y = freq, x = group)) +
+#                             geom_bar(position = "dodge", stat = "identity") +
+#                             theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 8),
+#                                   axis.title.x = element_text(size = 10)) +
+#                             xlab(x) + ylab(NULL)
+#
+#                           # barchart(freq ~ group, data = plotData, groups = LC,
+#                           #          scales = list(x = list(rot = 40, cex = 0.6)))
+#                         })
+#
+#
+#   do.call(gridExtra::grid.arrange,
+#           c(barplotList, ncol = min(3, ceiling((length(names(segIN()$segFactor)) - 1) / 2))))
+#
+#
+#   })
 
 
 # output$profileNumeric <- renderPlot({
@@ -166,47 +166,47 @@ output$profileFactors <- renderPlot({
 # })
 
 
-output$profileChoices <- renderPlot({
-  if (is.null(input$segSelect)) {
-    LCselected <- paste0("LC", 4)
-  } else {
-    LCselected <- paste0("LC", input$segSelect)
-  }
-
-  dataLC <- dataIN()[lc_segs(), on = "ID"]
-
-  barplotListCho <- lapply(seq_along(defIN()$attLev),
-                           function(x) {
-                             plotDataCho <- dataLC[, mget(c(paste0("A", x, "_",
-                                                                   sequence(defIN()$nlev[x])), LCselected))]
-
-                             plotDataCho <- plotDataCho[, colSums(.SD),
-                                                        .SDcols = paste0("A", x, "_",
-                                                                         sequence(defIN()$nlev[x])),
-                                                        by = LCselected]
-
-
-                             plotDataCho[, c(LCselected) := factor(get(LCselected))]
-                             plotDataCho[, freq := V1 / sum(V1) * 100, by = LCselected]
-                             plotDataCho[, group := defIN()$attLev[[x]]]
-
-                             names(plotDataCho) <- c("LC", "count", "freq", "group")
-
-                             ggplot(plotDataCho,
-                                    aes(fill = LC, y = freq, x = group)) +
-                               geom_bar(position = "dodge", stat = "identity") +
-                               theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 8),
-                                     axis.title.x = element_text(size = 10)) +
-                               xlab(names(defIN()$nlev)[x]) + ylab(NULL)
-
-                             # barchart(freq ~ group, data = plotData, groups = LC,
-                             #          scales = list(x = list(rot = 40, cex = 0.6)))
-                           })
-
-
-  do.call(gridExtra::grid.arrange, c(barplotListCho, nrow = 2))
-
-})
+# output$profileChoices <- renderPlot({
+#   if (is.null(input$segSelect)) {
+#     LCselected <- paste0("LC", 4)
+#   } else {
+#     LCselected <- paste0("LC", input$segSelect)
+#   }
+#
+#   dataLC <- dataIN()[lc_segs(), on = "ID"]
+#
+#   barplotListCho <- lapply(seq_along(defIN()$attLev),
+#                            function(x) {
+#                              plotDataCho <- dataLC[, mget(c(paste0("A", x, "_",
+#                                                                    sequence(defIN()$nlev[x])), LCselected))]
+#
+#                              plotDataCho <- plotDataCho[, colSums(.SD),
+#                                                         .SDcols = paste0("A", x, "_",
+#                                                                          sequence(defIN()$nlev[x])),
+#                                                         by = LCselected]
+#
+#
+#                              plotDataCho[, c(LCselected) := factor(get(LCselected))]
+#                              plotDataCho[, freq := V1 / sum(V1) * 100, by = LCselected]
+#                              plotDataCho[, group := defIN()$attLev[[x]]]
+#
+#                              names(plotDataCho) <- c("LC", "count", "freq", "group")
+#
+#                              ggplot(plotDataCho,
+#                                     aes(fill = LC, y = freq, x = group)) +
+#                                geom_bar(position = "dodge", stat = "identity") +
+#                                theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 8),
+#                                      axis.title.x = element_text(size = 10)) +
+#                                xlab(names(defIN()$nlev)[x]) + ylab(NULL)
+#
+#                              # barchart(freq ~ group, data = plotData, groups = LC,
+#                              #          scales = list(x = list(rot = 40, cex = 0.6)))
+#                            })
+#
+#
+#   do.call(gridExtra::grid.arrange, c(barplotListCho, nrow = 2))
+#
+# })
 
 
 output$profileSegDT <- DT::renderDataTable({

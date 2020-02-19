@@ -9,6 +9,7 @@ library(shinyWidgets)
 library(ggplot2)
 library(gridExtra)
 library(sparkline)
+library(scatterD3)
 #Add all required packages here
 
 ####Active Directory####
@@ -148,7 +149,8 @@ ui <- kantarPage(
                          valueBoxOutput("compBox", width = 4),
                          valueBoxOutput("uniquenessBox", width = 4),
                          width = 12),
-                kantarBox("?? ScatterPlot - Demand vs. Number of better options",
+                kantarBox(
+                  scatterD3::scatterD3Output("demandGrid"),
                           width = 12)),
               tabPanel(
                 title = "Demand Strategy",
@@ -174,10 +176,13 @@ ui <- kantarPage(
         tabsetPanel(
           tabPanel(
             title = "Profile Single Level",
-            column(kantarBox(verbatimTextOutput("profileLevel"),
-                             title = "Profile",
-                             width = 12),
-                   width = 8),
+            column(kantarBox(
+              div(style = "overflow-y: scroll; overflow-x: scroll;
+                  height: 80vh; font-size: 80%",
+                  DT::dataTableOutput("profileLevelDT")),
+                title = "Profile",
+                width = 12),
+              width = 8),
             kantarBox(uiOutput("selProfileLevel"),
                       br(),
                       title = "Select a Level",
