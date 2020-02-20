@@ -228,7 +228,8 @@ ui <- kantarPage(
       tabItem(
         tabName = 'expansion',
         kantarBox(div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
-                      "Review overall product performance: Look for demand gaps in segments", br(), br(),
+                      "Review overall product performance: Look for demand gaps in segments",
+                      br(), br(),
                       "Search for hypothetical new products with maximum demand and minimum portfolio overlap"),
                   title = "Expansion",
                   width = 12)
@@ -238,8 +239,10 @@ ui <- kantarPage(
       tabItem(
         tabName = 'contract',
         kantarBox(div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
-                      "Review overall product performance: Rank portfolio products by demand in total sample", br(), br(),
-                      "Review overall product performance: Compare products by demand in segments", br(), br(),
+                      "Review overall product performance: Rank portfolio products by demand in total sample",
+                      br(), br(),
+                      "Review overall product performance: Compare products by demand in segments",
+                      br(), br(),
                       "Count portfolio products with same or higher demand value"),
                   title = "Contraction",
                   width = 12)

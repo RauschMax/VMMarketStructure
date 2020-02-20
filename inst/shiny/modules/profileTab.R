@@ -91,7 +91,8 @@ output$profileLevelDT <- DT::renderDataTable({
   levelProfileDT[, c(names(dataUSED())[grep("^A", names(dataUSED()))]) :=
                    lapply(seq_along(.SD),
                           function(x) {
-                            .SD[[x]] / colSums(DataInclSeg[, mget(c(names(dataUSED())[grep("^A", names(dataUSED()))]))])[x]
+                            .SD[[x]] / colSums(DataInclSeg[, mget(c(names(dataUSED())[grep("^A",
+                                                                                           names(dataUSED()))]))])[x]
                           }),
                  .SDcols = names(dataUSED())[grep("^A", names(dataUSED()))]]
 

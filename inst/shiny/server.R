@@ -58,47 +58,11 @@ server <- function(input, output, session) {
 
   output$test <- renderPrint({
 
-    # list(dataUSED(),
-    #      selectionSize(),
-    #      names(session$clientData),
-    #      session$clientData$pixelratio,
-    #      session$clientData$url_search)
-
-    DataInclSeg <- dataUSED()[segIN()$segFactor, on = "ID"][, mget(c("ID",
-                                                                     names(dataUSED())[grep("^A", names(dataUSED()))],
-                                                                     names(segIN()$segFactor)[-1]))]
-
-    # levelProfileDT <- rbindlist(
-      lapply(seq_along(segDefIN()$segLevFact),
-             function(x) {
-               selCol <- names(segIN()$segFactor)[x + 1]
-               name <- names(segDefIN()$segLevFact)[x]
-
-               out <- lapply(names(dataUSED())[grep("^A", names(dataUSED()))],
-                             function(i) {
-                               help1 <- dcast(DataInclSeg, get(selCol) ~ get(i),
-                                              value.var = 'ID', length)
-
-                               if (!("1" %in% names(help1))) help1[, "1" := 0]
-
-                               help1 <- help1[, c("selCol", "1")]
-
-                               names(help1) <- c("seg", i)
-
-                               help1
-                             })
-
-               # out <- Reduce("cbind", out)[, mget(c("seg", names(dataUSED())[grep("^A", names(dataUSED()))]))]
-               #
-               # out[, Seg := name]
-               # names(out) <- c("Segment", names(dataUSED())[grep("^A", names(dataUSED()))], "Seg")
-
-               out
-               # [, mget(c("Segment", "Seg", names(dataUSED())[grep("^A", names(dataUSED()))]))]
-             })
-      # )
-
-    # levelProfileDT
+    list(dataUSED(),
+         selectionSize(),
+         names(session$clientData),
+         session$clientData$pixelratio,
+         session$clientData$url_search)
 
   })
 
