@@ -41,7 +41,7 @@ SKUinput_Demand <- reactive({
 
 
   validate(
-    need(!is.na(SKUinput()), "You need a SKU list!")
+    need(!is.null(SKUinput()), "You need a SKU list!")
   )
 
   # selIDs <- lapply(1:input$segSelect,
