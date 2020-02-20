@@ -45,6 +45,14 @@ server <- function(input, output, session) {
   source("./modules/segTab.R",
          local = TRUE)$value
 
+  ## Segmentation Tab
+  source("./modules/expanseTab.R",
+         local = TRUE)$value
+
+  ## Segmentation Tab
+  source("./modules/contractTab.R",
+         local = TRUE)$value
+
   # ## Importance Diagrams - Sankey, Treemap
   # source("./modules/impDiagrams.R",
   #        local = TRUE)$value
@@ -58,7 +66,7 @@ server <- function(input, output, session) {
 
   output$test <- renderPrint({
 
-    list(dataUSED(),
+    list(SKUinput(),
          selectionSize(),
          names(session$clientData),
          session$clientData$pixelratio,

@@ -273,6 +273,24 @@ SKUinput <- eventReactive(input$go, {
                          paste0("A", rep(seq_along(defIN()$nlev),
                                          defIN()$nlev), "_",
                                 sequence(defIN()$nlev)))
+
+    # add SKU by Attribute part
+    sapply(seq_along(defIN()$nlev),
+           function(x) {
+             SKUinput[, paste0("A", x) := apply(.SD, 1, which.max),
+                      .SDcols = paste0("A", x, "_", sequence(defIN()$nlev[x]))]
+
+             SKUinput[, paste0("A", x) := sapply(get(paste0("A", x)),
+                                                 function(y) {
+                                                   check_y <- ifelse(length(y) == 0, NA, y)
+                                                   if (is.na(check_y)) {
+                                                     0
+                                                   } else {
+                                                     check_y
+                                                   }
+                                                 })]
+           })
+
     SKUinput
   }
 })

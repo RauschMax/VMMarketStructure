@@ -176,23 +176,24 @@ ui <- kantarPage(
         tabsetPanel(
           tabPanel(
             title = "Profile Single Level",
-            column(kantarBox(
+            kantarBox(
               div(style = "overflow-y: scroll; overflow-x: scroll;
-                  height: 80vh; font-size: 80%",
+                  height: 70vh; font-size: 80%",
                   DT::dataTableOutput("profileLevelDT")),
-                title = "Profile",
-                width = 12),
-              width = 8),
-            kantarBox(uiOutput("selProfileLevel"),
-                      br(),
-                      title = "Select a Level",
-                      width = 4)),
+              title = "Profile",
+              width = 12)
+            # ,
+            # kantarBox(uiOutput("selProfileLevel"),
+            #           br(),
+            #           title = "Select a Level",
+            #           width = 4)
+          ),
           tabPanel(
             title = "Profile Product",
-            column(kantarBox(verbatimTextOutput("profileSKU"),
-                             title = "Profile",
-                             width = 12),
-                   width = 8),
+            kantarBox(div(style = "overflow-y: scroll; height:70vh; font-size:80%;",
+                          uiOutput("profProdSegUI")),
+                      title = "Profile",
+                      width = 8),
             kantarBox(uiOutput("attLev2"),
                       title = "Select a Product",
                       width = 4))
@@ -228,7 +229,7 @@ ui <- kantarPage(
       tabItem(
         tabName = 'expansion',
         kantarBox(div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
-                      "Review overall product performance: Look for demand gaps in segments",
+                      DT::dataTableOutput("SKUperformanceDT"),
                       br(), br(),
                       "Search for hypothetical new products with maximum demand and minimum portfolio overlap"),
                   title = "Expansion",
@@ -239,13 +240,17 @@ ui <- kantarPage(
       tabItem(
         tabName = 'contract',
         kantarBox(div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
-                      "Review overall product performance: Rank portfolio products by demand in total sample",
-                      br(), br(),
-                      "Review overall product performance: Compare products by demand in segments",
-                      br(), br(),
+                      DT::dataTableOutput("SKUcontractDT1")),
+                  title = "Rank portfolio products by demand in total sample",
+                  width = 4),
+        kantarBox(div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
+                      DT::dataTableOutput("SKUcontractDT2")),
+                  title = "Products by demand in segments",
+                  width = 4),
+        kantarBox(div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
                       "Count portfolio products with same or higher demand value"),
                   title = "Contraction",
-                  width = 12)
+                  width = 4)
       )
     )
   ),
