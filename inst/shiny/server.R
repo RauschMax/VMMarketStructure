@@ -67,10 +67,7 @@ server <- function(input, output, session) {
   output$test <- renderPrint({
 
     list(SKUinput(),
-         selectionSize(),
-         names(session$clientData),
-         session$clientData$pixelratio,
-         session$clientData$url_search)
+         selectionSize())
 
   })
 
