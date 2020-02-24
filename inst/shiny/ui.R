@@ -118,7 +118,7 @@ ui <- kantarPage(
     tabItems(
       tabItem(
         tabName = 'home',
-        h2("HOME TAB"),
+        h2("HOME TAB (Version - 24.02.2020)"),
         # kantarBox(uiOutput("attLev")),
         kantarBox(verbatimTextOutput("test"))
       ),
