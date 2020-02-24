@@ -66,8 +66,8 @@ server <- function(input, output, session) {
 
   output$test <- renderPrint({
 
-    list(Demand_DT(),
-         SKUinput(),
+    list(summary(Demand_DT()[, demand]),
+         nrow(SKUinput()),
          selectionSize())
 
   })
