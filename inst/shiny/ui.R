@@ -30,7 +30,7 @@ ui <- kantarPage(
                     tags$div(class = "color-line nav-header"),
                     tags$div(class = "textMenu",
                              tags$span(class = "KT", "Kantar "),
-                             tags$span(class = "kgold", 'MarketStructure')),
+                             tags$span(class = "kgold", 'PortfolioBuilder')),
                     tags$div(class = "LogoMenu",
                              tags$img(class = "mb-3 mt-3 logo",
                                       src = web_dependencies$img),
@@ -128,7 +128,16 @@ ui <- kantarPage(
         tabName = 'decision',
         kantarBox(div(style = "overflow-y:scroll; overflow-x:auto;
                            height:72vh; font-size:80%; margin-bottom:10px;",
-                      uiOutput("decMatUI")), width = 12),
+                      tabsetPanel(
+                        tabPanel(
+                          title = "Decision Hierarchy",
+                          uiOutput("decMatUI")),
+                        tabPanel(
+                          title = "Decision Hierarchy (alternative table)",
+                          DT::dataTableOutput("decMatAlt"),
+                          downloadButton("DownDecMat")
+                        )
+                      )), width = 12),
         kantarBox(uiOutput("selSegment"), br(), width = 5),
         kantarBox(uiOutput("selLevel"), br(), width = 5),
         valueBoxOutput("selectionSizeBox", width = 2)
@@ -256,7 +265,7 @@ ui <- kantarPage(
   ),
 
   #Title change from default
-  title = 'Market Structure'
+  title = 'Kantar PortfolioBuilder'
 )
 
 # KTShiny::kantar_auth_ui(ui = ui, app_id = app_id)

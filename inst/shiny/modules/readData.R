@@ -544,9 +544,26 @@ Imp_ordered <- reactive({
                            }
                            )[orderAtt]
 
+  Dt_LevCount <- rbindlist(lapply(LevelCounts_100_ordered,
+                                  function(x) {
+                                    out <- rep(NA, max(defIN()$nlev))
+                                    out[1:length(x)] <- x
+                                    data.table(t(out))
+                                  }))
+
+  Dt_Levels <- rbindlist(lapply(attLev_ordered,
+                                function(x) {
+                                  out <- rep("", max(defIN()$nlev))
+                                  out[1:length(x)] <- x
+                                  data.table(t(out))
+                                }))
+  names(Dt_Levels) <- paste0("A", 1:max(defIN()$nlev))
+
   list(Imp = Importance()$Importance[orderAtt],
        LevCount = LevelCounts_100_ordered,
-       attLev_ordered = attLev_ordered)
+       attLev_ordered = attLev_ordered,
+       Dt_LevCount = Dt_LevCount,
+       Dt_Levels = Dt_Levels)
 
 })
 
