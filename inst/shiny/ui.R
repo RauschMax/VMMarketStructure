@@ -77,7 +77,9 @@ ui <- kantarPage(
     menuItem(tabName = 'profile', text = 'Profiling', icon = icon('users')),
     menuItem(tabName = 'buyseg', text = 'Segmentation', icon = icon('filter')),
     menuItem(tabName = 'expansion', text = 'Expansion', icon = icon('expand')),
-    menuItem(tabName = 'contract', text = 'Contraction', icon = icon('compress'))
+    menuItem(tabName = 'contract', text = 'Contraction', icon = icon('compress')),
+    div(style = "margin: 25px;",
+        textOutput("segSize", inline = FALSE))
     # ,
     # menuItem(tabName = 'portfolio', text = 'Portfolio Rankings', icon = icon('trophy'))
   ),
@@ -118,9 +120,11 @@ ui <- kantarPage(
     tabItems(
       tabItem(
         tabName = 'home',
-        h2("HOME TAB (Version - 26.02.2020)"),
+        h2("HOME TAB (Version - 27.02.2020)"),
         # kantarBox(uiOutput("attLev")),
-        kantarBox(verbatimTextOutput("test"))
+        kantarBox(h3("What kind of summary should we put here?"),
+                  verbatimTextOutput("test"),
+                  width = 12)
       ),
 
 

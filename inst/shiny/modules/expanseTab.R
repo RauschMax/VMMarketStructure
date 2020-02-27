@@ -62,13 +62,15 @@ SKUinput_Demand <- reactive({
 
   SKUinput <- SKUinput()
 
+  Demand_DT_used <- Demand_DT()[ID %in% chosenIDs(), ]
+
   SKUinput[, c(paste0("Group_", 1:input_segSelect), "Total") :=
              lapply(selIDs,
                     function(i) {
                       sapply(1:nrow(SKUinput),
                              function(x) {
                                selIndex_DT <-
-                                 Demand_DT()[,
+                                 Demand_DT_used[,
                                              rowSums(
                                                sapply(1:length(defIN()$nlev),
                                                       function(y) {
@@ -81,8 +83,8 @@ SKUinput_Demand <- reactive({
                                                )) == length(defIN()$nlev),
                                              .SDcols = paste0("Var", 1:length(defIN()$nlev))]
 
-                               mean(Demand_DT()[selIndex_DT, ][ID %in% i,
-                                                               max(demand), by = ID][, V1]) * 100
+                               mean(Demand_DT_used[selIndex_DT, ][ID %in% i,
+                                                                  max(demand), by = ID][, V1]) * 100
                              })
                     })]
 

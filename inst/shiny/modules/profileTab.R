@@ -57,9 +57,10 @@ output$profileLevelDT <- DT::renderDataTable({
     need(dataUSED(), "Please load the data.")
   )
 
-  DataInclSeg <- dataUSED()[segIN()$segFactor, on = "ID"][, mget(c("ID",
-                                                           names(dataUSED())[grep("^A", names(dataUSED()))],
-                                                           names(segIN()$segFactor)[-1]))]
+  DataInclSeg <- dataUSED()[segIN()$segFactor[ID %in% chosenIDs(), ],
+                            on = "ID"][, mget(c("ID",
+                                                names(dataUSED())[grep("^A", names(dataUSED()))],
+                                                names(segIN()$segFactor)[-1]))]
 
   levelProfileDT <- rbindlist(
     lapply(seq_along(segDefIN()$segLevFact),
@@ -162,7 +163,7 @@ output$attLev2 <- renderUI({
 #                              as.numeric(input[[paste0("selAtt", i)]])
 #                            })
 #
-#   selIndex_DT <- Demand_DT()[, rowSums(sapply(1:length(defIN()$nlev),
+#   selIndex_DT <- Demand_DT_used[, rowSums(sapply(1:length(defIN()$nlev),
 #                                               function(x) {
 #                                                 .SD[[x]] %in% c(NA, 0, selectedLevels[x])
 #                                               }
@@ -170,8 +171,8 @@ output$attLev2 <- renderUI({
 #   .SDcols = paste0("Var", 1:length(defIN()$nlev))]
 #
 #   # ASSUPMTION take 90% quantile as "with demand
-#   proChoiceProfile_IDs <- unique(Demand_DT()[selIndex_DT, ][demand > quantile(Demand_DT()[selIndex_DT,
-#                                                                                           demand], .9), ID])
+#   proChoiceProfile_IDs <- unique(Demand_DT_used[selIndex_DT, ][demand > quantile(Demand_DT_used[selIndex_DT,
+#                                                                                                 demand], .9), ID])
 #
 #   proChoiceProfile <- segIN()$segFactor[ID %in% proChoiceProfile_IDs]
 #
@@ -190,7 +191,9 @@ observe({
                              as.numeric(input[[paste0("selAtt", i)]])
                            })
 
-  selIndex_DT <- Demand_DT()[, rowSums(sapply(1:length(defIN()$nlev),
+  Demand_DT_used <- Demand_DT()[ID %in% chosenIDs(), ]
+
+  selIndex_DT <- Demand_DT_used[, rowSums(sapply(1:length(defIN()$nlev),
                                               function(x) {
                                                 .SD[[x]] %in% c(NA, 0, selectedLevels[x])
                                               }
@@ -198,8 +201,8 @@ observe({
   .SDcols = paste0("Var", 1:length(defIN()$nlev))]
 
   # ASSUPMTION take 90% quantile as "with demand
-  proChoiceProfile_IDs <- unique(Demand_DT()[selIndex_DT, ][demand > quantile(Demand_DT()[selIndex_DT,
-                                                                                          demand], .9), ID])
+  proChoiceProfile_IDs <- unique(Demand_DT_used[selIndex_DT, ][demand > quantile(Demand_DT_used[selIndex_DT,
+                                                                                                demand], .9), ID])
 
   proChoiceProfile <- segIN()$segFactor[ID %in% proChoiceProfile_IDs]
 

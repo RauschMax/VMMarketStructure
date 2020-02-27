@@ -323,6 +323,12 @@ output$selectionSizeBox <- renderValueBox({
            icon = icon("users"))
 })
 
+output$segSize <- renderText({
+  total <- ""
+  if (is.null(input$segs)) total <- " - ALL"
+  paste("Base = ", selectionSize(), "\n", total)
+})
+
 output$testDecHier <- renderPrint({
 
   diagramData()

@@ -29,17 +29,19 @@ demandAnalysis <- reactive({
            as.numeric(input[[paste0("ShowAtt", i)]])
          })
 
-  selIndex_DT <- Demand_DT()[, rowSums(sapply(1:length(defIN()$nlev),
+  Demand_DT_used <- Demand_DT()[ID %in% chosenIDs(), ]
+
+  selIndex_DT <- Demand_DT_used[, rowSums(sapply(1:length(defIN()$nlev),
                                             function(x) {
                                               .SD[[x]] %in% c(NA, 0, selectedLevels[x])
                                             }
   )) == length(defIN()$nlev),
   .SDcols = paste0("Var", 1:length(defIN()$nlev))]
 
-  mean(Demand_DT()[selIndex_DT, ][, max(demand), by = ID][, V1])
-  demandSelected <- Demand_DT()[Demand_DT()[selIndex_DT, ][, max(demand), by = ID], on = "ID"]
+  mean(Demand_DT_used[selIndex_DT, ][, max(demand), by = ID][, V1])
+  demandSelected <- Demand_DT_used[Demand_DT_used[selIndex_DT, ][, max(demand), by = ID], on = "ID"]
 
-  demandSummary <- Demand_DT()[selIndex_DT, ][, max(demand), by = ID]
+  demandSummary <- Demand_DT_used[selIndex_DT, ][, max(demand), by = ID]
   demandSummary[is.na(V1), V1 := 0]
   demandSummary <- demandSelected[demand > V1, .N, by = ID][demandSummary, on = "ID"]
   demandSummary[is.na(N), N := 0]
@@ -193,12 +195,14 @@ output$strategyProfile <- DT::renderDataTable({
                                    })
                           })
 
+  Demand_DT_used <- Demand_DT()[ID %in% chosenIDs(), ]
+
   stratDemand <- sapply(stratRotation,
                         function(i) {
                           sapply(i,
                                  function(j) {
                                    selectedLevels <- j
-                                   selIndexDT <- Demand_DT()[, rowSums(sapply(1:length(defIN()$nlev),
+                                   selIndexDT <- Demand_DT_used[, rowSums(sapply(1:length(defIN()$nlev),
                                                                               function(x) {
                                                                                 .SD[[x]] %in% c(NA, 0,
                                                                                                 selectedLevels[x])
@@ -206,7 +210,7 @@ output$strategyProfile <- DT::renderDataTable({
                                    )) == length(defIN()$nlev),
                                    .SDcols = paste0("Var", 1:length(defIN()$nlev))]
 
-                                   mean(Demand_DT()[selIndexDT, ][, max(demand), by = ID][, V1]) -
+                                   mean(Demand_DT_used[selIndexDT, ][, max(demand), by = ID][, V1]) -
                                      demand_selected
                                  })
                         })

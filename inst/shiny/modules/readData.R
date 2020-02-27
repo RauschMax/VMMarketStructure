@@ -84,31 +84,31 @@ dataUSED <- reactive({
 
 })
 
-# chosen combinations per respondent
-SKU_choice_DT <- eventReactive(input$go, {
-
-  validate(
-    need(input$study, "Please load Study with StudyID and password!")
-  )
-
-  validate(
-    need(pw(), "Please enter correct password!")
-  )
-
-  if (isolate(input$pw) == isolate(pw())) {
-    get_combs <- BeastRServer::azure_blob_call("GET",
-                                               storage_account = "shinyapp",
-                                               storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
-                                                                    "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
-                                                                    "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
-                                               container = paste0("ms", input$study),
-                                               blob = "comb.csv")
-
-    SKU_choice_DT <- data.table(httr::content(get_combs, type = "text/csv", encoding = "UTF-8"))
-    rm(get_combs)
-    SKU_choice_DT
-  }
-})
+# # chosen combinations per respondent
+# SKU_choice_DT <- eventReactive(input$go, {
+#
+#   validate(
+#     need(input$study, "Please load Study with StudyID and password!")
+#   )
+#
+#   validate(
+#     need(pw(), "Please enter correct password!")
+#   )
+#
+#   if (isolate(input$pw) == isolate(pw())) {
+#     get_combs <- BeastRServer::azure_blob_call("GET",
+#                                                storage_account = "shinyapp",
+#                                                storage_key = paste0("o4PoNgKwzu76hDcjdqgOEdH+J5d6",
+#                                                                     "Qp+UYHW8CCyOf/WBtYTspa0VT+z7",
+#                                                                     "DJcAWE80GlefAbw+XKp6DUtZKQIFCw=="),
+#                                                container = paste0("ms", input$study),
+#                                                blob = "comb.csv")
+#
+#     SKU_choice_DT <- data.table(httr::content(get_combs, type = "text/csv", encoding = "UTF-8"))
+#     rm(get_combs)
+#     SKU_choice_DT
+#   }
+# })
 
 # demand data.table
 Demand_DT <- eventReactive(input$go, {
