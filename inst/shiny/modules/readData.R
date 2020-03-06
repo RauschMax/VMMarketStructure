@@ -479,12 +479,13 @@ Importance <- reactive({
   names(Importance) <- names(defIN()$attLev)
 
   # Level counts - 100% within attributes
-  LevelCounts_100 <- lapply(paste0("^A", 1:length(defIN()$nlev), "_"),
+  LevelCounts_100 <- lapply(1:length(defIN()$nlev),
                             function(y) {
-                              out <- apply(dataUSED()[, grep(y, x = names(dataUSED())),
-                                                  with = FALSE], 2, sum) /
-                                sum(apply(dataUSED()[, grep(y, x = names(dataUSED())),
-                                                 with = FALSE], 2, sum))
+                              helpPattern <- paste0("^A", 1:length(defIN()$nlev), "_")[y]
+                              out <- sapply(names(Data)[grep(helpPattern, x = names(Data))],
+                                            function(i) {
+                                              sum(Data[, get(i)]) / length(Data[, get(i)])
+                                            })
 
                               names(out) <- defIN()$attLev[[y]]
                               out

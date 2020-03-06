@@ -135,12 +135,11 @@ ui <- kantarPage(
                       tabsetPanel(
                         tabPanel(
                           title = "Decision Hierarchy",
-                          uiOutput("decMatUI")),
-                        tabPanel(
-                          title = "Decision Hierarchy (alternative table)",
                           DT::dataTableOutput("decMatAlt"),
-                          downloadButton("DownDecMat")
-                        )
+                          downloadButton("DownDecMat")),
+                        tabPanel(
+                          title = "Decision Hierarchy (OLD)",
+                          uiOutput("decMatUI"))
                       )), width = 12),
         kantarBox(uiOutput("selSegment"), br(), width = 5),
         kantarBox(uiOutput("selLevel"), br(), width = 5),

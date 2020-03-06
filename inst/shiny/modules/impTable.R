@@ -59,6 +59,7 @@ output$decMatAlt <- DT::renderDataTable({
 
   DT_pie <- copy(Dt_LevCount)
   DT_pie[, Attribute := names(Imp_ordered()$LevCount)]
+  DT_pie[, Importance := Imp_ordered()$Imp]
   DT_pie[, paste0("V", 1:max(defIN()$nlev)) := lapply(.SD,
                                                     function(x) {
                                                       out <- paste((1 - round(x, 3)) * 100, round(x * 100, 1),
@@ -70,7 +71,7 @@ output$decMatAlt <- DT::renderDataTable({
                                                     }),
          .SDcols = paste0("V", 1:max(defIN()$nlev))]
 
-  dt_out <- DT_pie[, mget(c("Attribute", paste0("V", 1:max(defIN()$nlev))))]
+  dt_out <- DT_pie[, mget(c("Attribute", "Importance", paste0("V", 1:max(defIN()$nlev))))]
 
   dt_out[, paste0("V", 1:max(defIN()$nlev)) :=
             lapply(seq_along(.SD),
@@ -133,7 +134,8 @@ output$decMatAlt <- DT::renderDataTable({
                            'color': '#fff'});",
                                  "}"))
   ) %>%
-    sparkline::spk_add_deps()
+    sparkline::spk_add_deps() %>%
+    formatPercentage("Importance",  digits = 1)
 
 
 })
