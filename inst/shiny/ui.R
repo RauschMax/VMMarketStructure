@@ -120,7 +120,7 @@ ui <- kantarPage(
     tabItems(
       tabItem(
         tabName = 'home',
-        h2("HOME TAB (Version - 27.02.2020)"),
+        h2("HOME TAB (Version - 19.03.2020)"),
         # kantarBox(uiOutput("attLev")),
         kantarBox(h3("What kind of summary should we put here?"),
                   verbatimTextOutput("test"),
@@ -156,6 +156,16 @@ ui <- kantarPage(
           column(
             tabsetPanel(
               tabPanel(
+                title = "Demand Playground",
+                fluidRow(valueBoxOutput("demandBoxPlay", width = 4),
+                         valueBoxOutput("demandPeopleSelected", width = 4),
+                         valueBoxOutput("demandPeopleAll", width = 4),
+                         width = 12),
+                box(
+                  sliderInput("demandThreshold", "Set Demand Threshold",
+                              min = 0, max = 1, value = .9, step = .05),
+                  width = 12)),
+              tabPanel(
                 title = "Demand Overview",
                 fluidRow(valueBoxOutput("demandBox", width = 4),
                          valueBoxOutput("compBox", width = 4),
@@ -163,7 +173,7 @@ ui <- kantarPage(
                          width = 12),
                 kantarBox(
                   scatterD3::scatterD3Output("demandGrid"),
-                          width = 12)),
+                  width = 12)),
               tabPanel(
                 title = "Demand Strategy",
                 div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",

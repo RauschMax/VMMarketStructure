@@ -15,7 +15,8 @@ output$attLev <- renderUI({
                                      " (", length(defIN()$attLev[[i]]), " Levels)",
                                      sep = "", collapse = " "),
                        choices = choList,
-                       selected = NULL,
+                       # selected = 1,
+                       # multiple = TRUE,
                        width = '100%')
          })
 })
@@ -54,6 +55,102 @@ demandAnalysis <- reactive({
   list(demandSelected = demandSelected,
        demandSummary = demandSummary,
        means = colMeans(demandSummary))
+})
+
+output$demandBoxPlay <- renderValueBox({
+
+  validate(
+    need(Demand_DT(), "demand is needed")
+  )
+
+  selectedLevels <- sapply(1:length(defIN()$nlev),
+                           function(i) {
+                             as.numeric(input[[paste0("ShowAtt", i)]])
+                           })
+
+  Demand_DT_used <- Demand_DT()[ID %in% chosenIDs(), ]
+  selIndex_DT <- Demand_DT_used[, rowSums(sapply(1:length(defIN()$nlev),
+                                                 function(x) {
+                                                   .SD[[x]] %in% c(NA, 0, selectedLevels[x])
+                                                 }
+  )) == length(defIN()$nlev),
+  .SDcols = paste0("Var", 1:length(defIN()$nlev))]
+
+  Demand_DT_used <- Demand_DT_used[selIndex_DT, ]
+
+  thresholdUsed <- quantile(Demand_DT_used[, demand],
+                            input$demandThreshold)
+
+  ntakers <- length(unique(Demand_DT_used[demand > thresholdUsed, ID]))
+  ntakersAll <- length(unique(Demand_DT()[demand > thresholdUsed, ID]))
+
+  valueBox(value = format(round(ntakers / ntakersAll, 3) * 100,
+                          nsmall = 1),
+           subtitle = "Demand of selected product (with demand / with demand ALL)",
+           color = "red",
+           icon = icon("heart-o"))
+})
+
+output$demandPeopleAll <- renderValueBox({
+
+  validate(
+    need(Demand_DT(), "demand is needed")
+  )
+
+  selectedLevels <- sapply(1:length(defIN()$nlev),
+                           function(i) {
+                             as.numeric(input[[paste0("ShowAtt", i)]])
+                           })
+
+  Demand_DT_used <- Demand_DT()[ID %in% chosenIDs(), ]
+  selIndex_DT <- Demand_DT_used[, rowSums(sapply(1:length(defIN()$nlev),
+                                                 function(x) {
+                                                   .SD[[x]] %in% c(NA, 0, selectedLevels[x])
+                                                 }
+  )) == length(defIN()$nlev),
+  .SDcols = paste0("Var", 1:length(defIN()$nlev))]
+
+  Demand_DT_used <- Demand_DT_used[selIndex_DT, ]
+  thresholdUsed <- quantile(Demand_DT_used[, demand],
+                            input$demandThreshold)
+
+  demand <- mean(Demand_DT()[demand > thresholdUsed, demand])
+
+  valueBox(value = format(round(demand, 3) * 100, nsmall = 1),
+           subtitle = "Mean Demand (only demands above threshold)",
+           color = "red",
+           icon = icon("heart-o"))
+})
+
+output$demandPeopleSelected <- renderValueBox({
+
+  validate(
+    need(Demand_DT(), "demand is needed")
+  )
+
+  selectedLevels <- sapply(1:length(defIN()$nlev),
+                           function(i) {
+                             as.numeric(input[[paste0("ShowAtt", i)]])
+                           })
+
+  Demand_DT_used <- Demand_DT()[ID %in% chosenIDs(), ]
+  selIndex_DT <- Demand_DT_used[, rowSums(sapply(1:length(defIN()$nlev),
+                                                 function(x) {
+                                                   .SD[[x]] %in% c(NA, 0, selectedLevels[x])
+                                                 }
+  )) == length(defIN()$nlev),
+  .SDcols = paste0("Var", 1:length(defIN()$nlev))]
+
+  Demand_DT_used <- Demand_DT_used[selIndex_DT, ]
+  thresholdUsed <- quantile(Demand_DT_used[, demand],
+                            input$demandThreshold)
+
+  ntakers <- length(unique(Demand_DT_used[demand > thresholdUsed, ID]))
+
+  valueBox(value = ntakers,
+           subtitle = "Number of respondents with demand for selected product",
+           color = "purple",
+           icon = icon("users"))
 })
 
 output$demandBox <- renderValueBox({
