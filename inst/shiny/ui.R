@@ -157,9 +157,8 @@ ui <- kantarPage(
             tabsetPanel(
               tabPanel(
                 title = "Demand Playground",
-                fluidRow(valueBoxOutput("demandBoxPlay", width = 4),
-                         valueBoxOutput("demandPeopleSelected", width = 4),
-                         valueBoxOutput("demandPeopleAll", width = 4),
+                fluidRow(valueBoxOutput("demandBoxPlay", width = 6),
+                         valueBoxOutput("demandPeopleSelected", width = 6),
                          width = 12),
                 box(
                   sliderInput("demandThreshold", "Set Demand Threshold",
