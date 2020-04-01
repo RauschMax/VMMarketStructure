@@ -29,6 +29,10 @@ server <- function(input, output, session) {
   source("./modules/readData.R",
          local = TRUE)$value
 
+  ## Data preparation and input fields
+  source("./modules/dataPrep.R",
+         local = TRUE)$value
+
   ## Decision Matrix
   source("./modules/impTable.R",
          local = TRUE)$value
