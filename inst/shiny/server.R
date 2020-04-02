@@ -33,7 +33,7 @@ server <- function(input, output, session) {
   source("./modules/dataPrep.R",
          local = TRUE)$value
 
-  ## Decision Matrix
+  # ## Decision Matrix
   source("./modules/impTable.R",
          local = TRUE)$value
 
@@ -49,13 +49,13 @@ server <- function(input, output, session) {
   source("./modules/segTab.R",
          local = TRUE)$value
 
-  ## Segmentation Tab
-  source("./modules/expanseTab.R",
-         local = TRUE)$value
-
-  ## Segmentation Tab
-  source("./modules/contractTab.R",
-         local = TRUE)$value
+  # ## Segmentation Tab
+  # source("./modules/expanseTab.R",
+  #        local = TRUE)$value
+  #
+  # ## Segmentation Tab
+  # source("./modules/contractTab.R",
+  #        local = TRUE)$value
 
   # ## Importance Diagrams - Sankey, Treemap
   # source("./modules/impDiagrams.R",
@@ -70,8 +70,7 @@ server <- function(input, output, session) {
 
   output$test <- renderPrint({
 
-    list(Demand_DT(),
-         selectionSize())
+    DecHierarchy()$LevCount
 
   })
 

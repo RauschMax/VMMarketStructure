@@ -37,36 +37,24 @@ output$selProfileLevel <- shiny::renderUI({
 
 })
 
-# output$profileLevel <- renderPrint({
-#
-#   levProfile_IDs <- dataUSED()[get(input$levProfile) == 1, ID]
-#
-#   levProfile <- segIN()$segFactor[ID %in% levProfile_IDs]
-#
-#   # Profile of considerers of selected level
-#   lapply(lapply(lapply(levProfile[, -1], table), prop.table),
-#          function(x) {
-#            round(x * 100, 1)
-#          })
-#
-# })
-
 output$profileLevelDT <- DT::renderDataTable({
 
   validate(
     need(dataUSED(), "Please load the data.")
   )
+  segData <- dataUSED()[, c(1, (sum(defIN()$nlev) + length(defIN()$nlev) + 2):ncol(dataUSED())),
+                         with = FALSE]
 
-  DataInclSeg <- dataUSED()[segIN()$segFactor[ID %in% chosenIDs(), ],
+  DataInclSeg <- dataUSED()[segData[ID %in% chosenIDs(), ],
                             on = "ID"][, mget(c("ID",
                                                 names(dataUSED())[grep("^A", names(dataUSED()))],
-                                                names(segIN()$segFactor)[-1]))]
+                                                names(segData)[-1]))]
 
   levelProfileDT <- rbindlist(
-    lapply(seq_along(segDefIN()$segLevFact),
+    lapply(seq_along(segLev()),
            function(x) {
-             selCol <- names(segIN()$segFactor)[x + 1]
-             name <- names(segDefIN()$segLevFact)[x]
+             selCol <- names(segData)[x + 1]
+             name <- names(segLev())[x]
 
              out <- lapply(names(dataUSED())[grep("^A", names(dataUSED()))],
                            function(i) {
@@ -156,34 +144,6 @@ output$attLev2 <- renderUI({
          })
 })
 
-# output$profileSKU <- renderPrint({
-#
-#   selectedLevels <- sapply(1:length(defIN()$nlev),
-#                            function(i) {
-#                              as.numeric(input[[paste0("selAtt", i)]])
-#                            })
-#
-#   selIndex_DT <- Demand_DT_used[, rowSums(sapply(1:length(defIN()$nlev),
-#                                               function(x) {
-#                                                 .SD[[x]] %in% c(NA, 0, selectedLevels[x])
-#                                               }
-#   )) == length(defIN()$nlev),
-#   .SDcols = paste0("Var", 1:length(defIN()$nlev))]
-#
-#   # ASSUPMTION take 90% quantile as "with demand
-#   proChoiceProfile_IDs <- unique(Demand_DT_used[selIndex_DT, ][demand > quantile(Demand_DT_used[selIndex_DT,
-#                                                                                                 demand], .9), ID])
-#
-#   proChoiceProfile <- segIN()$segFactor[ID %in% proChoiceProfile_IDs]
-#
-#   # Profile of considerers of selected level
-#   lapply(lapply(lapply(proChoiceProfile[, -1], table), prop.table),
-#          function(x) {
-#            round(x * 100, 1)
-#          })
-#
-# })
-
 
 observe({
   selectedLevels <- sapply(1:length(defIN()$nlev),
@@ -192,6 +152,9 @@ observe({
                            })
 
   Demand_DT_used <- Demand_DT()[ID %in% chosenIDs(), ]
+
+  segData <- dataUSED()[, c(1, (sum(defIN()$nlev) + length(defIN()$nlev) + 2):ncol(dataUSED())),
+                        with = FALSE]
 
   selIndex_DT <- Demand_DT_used[, rowSums(sapply(1:length(defIN()$nlev),
                                               function(x) {
@@ -204,13 +167,13 @@ observe({
   proChoiceProfile_IDs <- unique(Demand_DT_used[selIndex_DT, ][demand > quantile(Demand_DT_used[selIndex_DT,
                                                                                                 demand], .9), ID])
 
-  proChoiceProfile <- segIN()$segFactor[ID %in% proChoiceProfile_IDs]
+  proChoiceProfile <- segData[ID %in% proChoiceProfile_IDs]
 
   # Profile of considerers of selected level
   profList <- lapply(lapply(proChoiceProfile[, -1], table, useNA = "ifany"), prop.table)
 
 
-  lapply(seq_along(segDefIN()$segLevFact),
+  lapply(seq_along(segLev()),
          function(x) {
            id <- paste0("profProdSeg", x)
 
@@ -220,7 +183,7 @@ observe({
 
              DT::datatable(dt, selection = list(mode = 'single', target = 'column'),
                            filter = "none", autoHideNavigation = TRUE, rownames = FALSE,
-                           colnames = names(segDefIN()$segLevFact)[x],
+                           colnames = names(segLev())[x],
                            escape = FALSE, style = "default", class = 'compact',
                            options = list(columnDefs = list(list(width = '200px', targets = 0)),
                                           # pageLength = 1,
@@ -247,12 +210,12 @@ observe({
 output$profProdSegUI <- renderUI({
 
   # lapply(seq_along(Imp_ordered()$LevCount),
-  lapply(seq_along(segDefIN()$segLevFact),
+  lapply(seq_along(segLev()),
          function(x) {
            id <- paste0("profProdSeg", x)
            div(style = "width:99%",
                # h6(div(style = "font-weight:bold; display:inline-block;",
-               #        toupper(names(segDefIN()$segLevFact)[x]))),
+               #        toupper(names(segLev())[x]))),
                DT::dataTableOutput(id)
            )
          })

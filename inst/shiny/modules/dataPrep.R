@@ -4,22 +4,19 @@
 output$selSegment <- shiny::renderUI({
 
   validate(
-    need(segDefIN(), "Please load the data.")
+    need(segLev(), "Please load the data.")
   )
 
-  nSegs <- length(segDefIN()$segLevFact)
+  nSegs <- length(segLev())
 
-  choList <- lapply(seq_along(segDefIN()$segLevFact),
+  choList <- lapply(seq_along(segLev()),
                     function(x) {
-                      vec <- paste0(x, "_", seq_along(segDefIN()$segLevFact[[x]]))
-                      names(vec) <- segDefIN()$segLevFact[[x]]
+                      vec <- paste0(x, "_", seq_along(segLev()[[x]]))
+                      names(vec) <- segLev()[[x]]
                       vec
                     })
 
-  names(choList) <- names(segDefIN()$segLevFact)
-
-  # shiny::selectizeInput('segs', 'Select Subgroup', choices = choList, multiple = TRUE,
-  #                       options = list(dropdownParent = 'body'))
+  names(choList) <- names(segLev())
 
   shinyWidgets::pickerInput(
     inputId = "segs",
@@ -44,7 +41,7 @@ output$selSegment <- shiny::renderUI({
 output$selLevel <- shiny::renderUI({
 
   validate(
-    need(segDefIN(), "Please load the data.")
+    need(defIN(), "Please load the data.")
   )
 
   nLevs <- length(defIN()$attLev)
@@ -88,7 +85,7 @@ segLev <- reactive({
     need(def(), "Wait for definitions!")
   )
 
-  segDefIN <- def[(grep("[[]Segments[]]", def()) + 1):length(def())]
+  segDefIN <- def()[(grep("[[]Segments[]]", def()) + 1):length(def())]
   # segment info
   segIndex <- grep("^[^ ]", segDefIN)
 
@@ -232,94 +229,85 @@ DecHierarchy <- reactive({
     need(dataUSED(), "Wait for data!")
   )
 
-  dataWeighted <- copy(dataUSED()[, 1:(sum(defIN()$nlev) + length(defIN()$nlev) + 1),
-                                  with = FALSE])
+  validate(
+    need(defIN(), "Wait for definitions!")
+  )
 
-  for (i in 1:length(defIN()$nlev)) {
-    sel1 <- paste0("A", i, "_", seq_along(grep(paste0("A", i, "_"),
-                                               names(dataWeighted))))
-    sel2 <- paste0("RankAtt", i)
-    # print(sel1)
-    dataWeighted[, (sel1) := lapply(.SD,
-                                    function(x) {
-                                      x * (length(defIN()$nlev) -
-                                             ifelse(is.na(dataWeighted[[sel2]]),
-                                                    0, dataWeighted[[sel2]]) + 1)
-                                    }),
-                 .SDcols = sel1]
-  }
+  input$segs
+  input$levels
 
-  Data_inverseRanks <- dataUSED[, mget(c("ID",
-                                         names(dataUSED)[grep("^R",
-                                                              names(dataUSED))]))]
+  isolate({
+    Data_inverseRanks <- dataUSED()[, mget(c("ID",
+                                             names(dataUSED())[grep("^R",
+                                                                    names(dataUSED()))]))]
 
-  Data_inverseRanks[, names(dataUSED)[grep("^R", names(dataUSED))] :=
-                      lapply(.SD,
-                             function(x) {
-                               if (all(is.na(x))) {
-                                 out <- x
-                               } else {
-                                 out <- (length(defIN()$nlev) + 1) - x
-                               }
-                               sapply(out,
-                                      function(y) {
-                                        ifelse(is.na(y), 0, y)
-                                      })
-                             }),
-                    .SDcols = names(dataUSED)[grep("^R", names(dataUSED))]]
-
-  Importance_invRanks <- sapply(Data_inverseRanks[, mget(names(Data_inverseRanks)[grep("^R",
-                                                                                       names(Data_inverseRanks))])],
-                                mean)
-
-  Importance <- Importance <- Importance_invRanks / sum(Importance_invRanks)
-  names(Importance) <- names(defIN()$attLev)
-
-  # Level counts - 100% within attributes
-  LevelCounts <- lapply(1:length(defIN()$nlev),
-                        function(y) {
-                          helpPattern <- paste0("^A", 1:length(defIN()$nlev), "_")[y]
-                          out <- sapply(names(dataWeighted)[grep(helpPattern,
-                                                                 x = names(dataWeighted))],
-                                        function(i) {
-                                          sum(dataWeighted[, get(i)]) /
-                                            length(dataWeighted[, get(i)])
+    Data_inverseRanks[, names(dataUSED())[grep("^R", names(dataUSED()))] :=
+                        lapply(.SD,
+                               function(x) {
+                                 if (all(is.na(x))) {
+                                   out <- x
+                                 } else {
+                                   out <- (length(defIN()$nlev) + 1) - x
+                                 }
+                                 sapply(out,
+                                        function(y) {
+                                          ifelse(is.na(y), 0, y)
                                         })
+                               }),
+                      .SDcols = names(dataUSED())[grep("^R", names(dataUSED()))]]
 
-                          names(out) <- defIN()$attLev[[y]]
-                          out
-                        })
-  names(LevelCounts) <- names(defIN()$attLev)
+    Importance_invRanks <- sapply(Data_inverseRanks[, mget(names(Data_inverseRanks)[grep("^R",
+                                                                                         names(Data_inverseRanks))])],
+                                  mean)
 
-  orderAtt <-  order(Importance,
-                     decreasing = TRUE)
+    Importance <- Importance <- Importance_invRanks / sum(Importance_invRanks)
+    names(Importance) <- names(defIN()$attLev)
 
-  LevelCounts_ordered <- LevelCounts[orderAtt]
+    # Level counts - 100% within attributes
+    LevelCounts <- lapply(1:length(defIN()$nlev),
+                          function(y) {
+                            helpPattern <- paste0("^A", 1:length(defIN()$nlev), "_")[y]
+                            out <- sapply(names(dataUSED())[grep(helpPattern,
+                                                                 x = names(dataUSED()))],
+                                          function(i) {
+                                            sum(dataUSED()[, get(i)]) /
+                                              length(dataUSED()[, get(i)])
+                                          })
 
-  attLev_ordered <- defIN()$attLev[orderAtt]
+                            names(out) <- defIN()$attLev[[y]]
+                            out
+                          })
+    names(LevelCounts) <- names(defIN()$attLev)
 
-  Dt_LevCount <- rbindlist(lapply(LevelCounts_ordered,
+    orderAtt <-  order(Importance,
+                       decreasing = TRUE)
+
+    LevelCounts_ordered <- LevelCounts[orderAtt]
+
+    attLev_ordered <- defIN()$attLev[orderAtt]
+
+    Dt_LevCount <- rbindlist(lapply(LevelCounts_ordered,
+                                    function(x) {
+                                      out <- rep(NA, max(defIN()$nlev))
+                                      out[1:length(x)] <- x
+                                      data.table(t(out))
+                                    }))
+
+    Dt_Levels <- rbindlist(lapply(attLev_ordered,
                                   function(x) {
-                                    out <- rep(NA, max(defIN()$nlev))
+                                    out <- rep("", max(defIN()$nlev))
                                     out[1:length(x)] <- x
                                     data.table(t(out))
                                   }))
+    names(Dt_Levels) <- paste0("A", 1:max(defIN()$nlev))
 
-  Dt_Levels <- rbindlist(lapply(attLev_ordered,
-                                function(x) {
-                                  out <- rep("", max(defIN()$nlev))
-                                  out[1:length(x)] <- x
-                                  data.table(t(out))
-                                }))
-  names(Dt_Levels) <- paste0("A", 1:max(defIN()$nlev))
-
-  DecHierarchy <- list(Imp = Importance[orderAtt],
-                       LevCount = LevelCounts_ordered,
-                       attLev_ordered = attLev_ordered,
-                       Dt_LevCount = Dt_LevCount,
-                       Dt_Levels = Dt_Levels)
-  DecHierarchy
-
+    DecHierarchy <- list(Imp = Importance[orderAtt],
+                         LevCount = LevelCounts_ordered,
+                         attLev_ordered = attLev_ordered,
+                         Dt_LevCount = Dt_LevCount,
+                         Dt_Levels = Dt_Levels)
+    DecHierarchy
+  })
 })
 
 # DATA extracted !------------------------------------------------------------------------------------------------------

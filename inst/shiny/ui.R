@@ -131,19 +131,16 @@ ui <- kantarPage(
       tabItem(
         tabName = 'decision',
         kantarBox(div(style = "overflow-y:scroll; overflow-x:auto;
-                           height:72vh; font-size:80%; margin-bottom:10px;",
-                      tabsetPanel(
-                        tabPanel(
-                          title = "Decision Hierarchy",
-                          DT::dataTableOutput("decMatAlt"),
-                          downloadButton("DownDecMat")),
-                        tabPanel(
-                          title = "Decision Hierarchy (OLD)",
-                          uiOutput("decMatUI"))
-                      )), width = 12),
-        kantarBox(uiOutput("selSegment"), br(), width = 5),
-        kantarBox(uiOutput("selLevel"), br(), width = 5),
-        valueBoxOutput("selectionSizeBox", width = 2)
+                           height:70vh; font-size:80%; margin-bottom:10px;",
+                      DT::dataTableOutput("decMat"),
+                      downloadButton("DownDecMat")),
+                  width = 12),
+        kantarBox(uiOutput("selSegment"), br(),
+                  width = 5),
+        kantarBox(uiOutput("selLevel"), br(),
+                  width = 5),
+        valueBoxOutput("selectionSizeBox",
+                       width = 2)
         # ,
         # verbatimTextOutput("testDecHier")
 

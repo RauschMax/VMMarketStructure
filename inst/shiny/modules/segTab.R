@@ -90,125 +90,6 @@ output$segSelectUI <- shiny::renderUI({
 })
 
 
-# output$profileFactors <- renderPlot({
-#   if (is.null(input$segSelect)) {
-#     LCselected <- paste0("LC", 4)
-#   } else {
-#     LCselected <- paste0("LC", input$segSelect)
-#   }
-#
-#   segsInclLC <- segIN()$segFactor[lc_segs(), on = "ID"]
-#
-#   barplotList <- lapply(names(segIN()$segFactor)[-1],
-#                         function(x) {
-#                           plotData <- segsInclLC[, mget(c(x, LCselected))]
-#                           plotData <- plotData[, .N, by = mget(c(x, LCselected))][order(get(names(plotData)[1]),
-#                                                                                         get(LCselected))]
-#
-#                           plotData[, c(LCselected) := factor(get(LCselected))]
-#
-#                           plotData[, freq := N / sum(N) * 100, by = LCselected]
-#
-#                           names(plotData) <- c("group", "LC", "count", "freq")
-#
-#                           ggplot(plotData,
-#                                  aes(fill = LC, y = freq, x = group)) +
-#                             geom_bar(position = "dodge", stat = "identity") +
-#                             theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 8),
-#                                   axis.title.x = element_text(size = 10)) +
-#                             xlab(x) + ylab(NULL)
-#
-#                           # barchart(freq ~ group, data = plotData, groups = LC,
-#                           #          scales = list(x = list(rot = 40, cex = 0.6)))
-#                         })
-#
-#
-#   do.call(gridExtra::grid.arrange,
-#           c(barplotList, ncol = min(3, ceiling((length(names(segIN()$segFactor)) - 1) / 2))))
-#
-#
-#   })
-
-
-# output$profileNumeric <- renderPlot({
-#   if (is.null(input$segSelect)) {
-#     LCselected <- paste0("LC", 4)
-#   } else {
-#     LCselected <- paste0("LC", input$segSelect)
-#   }
-#
-#   segsInclLCNum <- segIN()$segNumeric[lc_segs(), on = "ID"]
-#   plotData2 <- segsInclLCNum[, mget(c(names(segIN()$segNumeric)[-1], LCselected))]
-#
-#   plotData2[, c(LCselected) := factor(get(LCselected))]
-#
-#   plot_multi_histogram <- function(df, feature, label_column) {
-#     plt <- ggplot(df, aes(x = eval(parse(text = feature)),
-#                           fill = eval(parse(text = label_column)))) +
-#       geom_histogram(alpha = 0.7, position = "identity",
-#                      aes(y = ..density..), color = "black",
-#                      bins = 15) +
-#       geom_density(alpha = 0.7) +
-#       geom_vline(aes(xintercept = mean(eval(parse(text = feature)))),
-#                  color = "black", linetype = "dashed", size = 1) +
-#       labs(x = feature, y = "Density")
-#     plt + guides(fill = guide_legend(title = label_column))
-#   }
-#
-#   histList <- lapply(names(plotData2)[1],
-#                      function(x) {
-#                        plot_multi_histogram(plotData2, x, LCselected)
-#                      })
-#
-#   do.call(gridExtra::grid.arrange,
-#           c(histList, ncol = min(3, ceiling((length(names(segIN()$segNumeric)) - 1) / 2))))
-#
-# })
-
-
-# output$profileChoices <- renderPlot({
-#   if (is.null(input$segSelect)) {
-#     LCselected <- paste0("LC", 4)
-#   } else {
-#     LCselected <- paste0("LC", input$segSelect)
-#   }
-#
-#   dataLC <- dataIN()[lc_segs(), on = "ID"]
-#
-#   barplotListCho <- lapply(seq_along(defIN()$attLev),
-#                            function(x) {
-#                              plotDataCho <- dataLC[, mget(c(paste0("A", x, "_",
-#                                                                    sequence(defIN()$nlev[x])), LCselected))]
-#
-#                              plotDataCho <- plotDataCho[, colSums(.SD),
-#                                                         .SDcols = paste0("A", x, "_",
-#                                                                          sequence(defIN()$nlev[x])),
-#                                                         by = LCselected]
-#
-#
-#                              plotDataCho[, c(LCselected) := factor(get(LCselected))]
-#                              plotDataCho[, freq := V1 / sum(V1) * 100, by = LCselected]
-#                              plotDataCho[, group := defIN()$attLev[[x]]]
-#
-#                              names(plotDataCho) <- c("LC", "count", "freq", "group")
-#
-#                              ggplot(plotDataCho,
-#                                     aes(fill = LC, y = freq, x = group)) +
-#                                geom_bar(position = "dodge", stat = "identity") +
-#                                theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 8),
-#                                      axis.title.x = element_text(size = 10)) +
-#                                xlab(names(defIN()$nlev)[x]) + ylab(NULL)
-#
-#                              # barchart(freq ~ group, data = plotData, groups = LC,
-#                              #          scales = list(x = list(rot = 40, cex = 0.6)))
-#                            })
-#
-#
-#   do.call(gridExtra::grid.arrange, c(barplotListCho, nrow = 2))
-#
-# })
-
-
 output$profileSegDT <- DT::renderDataTable({
 
   validate(
@@ -223,14 +104,16 @@ output$profileSegDT <- DT::renderDataTable({
     LCnames <- paste0("LC", sequence(as.numeric(input$segSelect)))
   }
 
-  segsInclLC <- segIN()$segFactor[lc_segs(), on = "ID"]
+  segsInclLC <- dataUSED()[, c(1, (sum(defIN()$nlev) + length(defIN()$nlev) + 2):ncol(dataUSED())),
+                         with = FALSE][lc_segs(), on = "ID"]
 
   segProfileDT <- rbindlist(
-    lapply(seq_along(segDefIN()$segLevFact),
+    lapply(seq_along(segLev()),
            function(x) {
-             selCol <- names(segIN()$segFactor)[x + 1]
-             name <- names(segDefIN()$segLevFact)[x]
-             out <- dcast(segsInclLC, get(selCol) ~ get(LCselected), value.var = 'ID', length)
+             selCol <- names(segsInclLC)[x + 1]
+             name <- names(segLev())[x]
+             out <- dcast(segsInclLC, get(selCol) ~ get(LCselected),
+                          value.var = 'ID', length)
              out[, Seg := name]
              names(out) <- c("Segment", LCnames, "Seg")
 
@@ -323,11 +206,9 @@ output$profileChoDT <- DT::renderDataTable({
 
 output$testSegTab <- renderPrint({
 
-  input$segSelect
-  LCselected <- paste0("LC", input$segSelect)
-
-  segIN()$segFactor[lc_segs()[, get(LCselected)] == 1,
-                    mget(names(segIN()$segFactor)[-1])]
+  segsInclLC <- dataIN[, c(1, (sum(defIN$nlev) + length(defIN$nlev) + 2):ncol(dataIN)),
+                       with = FALSE][lc_segs(), on = "ID"]
+  segsInclLC
 
 })
 
