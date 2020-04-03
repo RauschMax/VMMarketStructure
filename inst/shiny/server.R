@@ -33,6 +33,10 @@ server <- function(input, output, session) {
   source("./modules/dataPrep.R",
          local = TRUE)$value
 
+  ## Data preparation and input fields
+  source("./modules/overviewTab.R",
+         local = TRUE)$value
+
   # ## Decision Matrix
   source("./modules/impTable.R",
          local = TRUE)$value
@@ -70,7 +74,7 @@ server <- function(input, output, session) {
 
   output$test <- renderPrint({
 
-    DecHierarchy()$LevCount
+    DecHierarchy()
 
   })
 

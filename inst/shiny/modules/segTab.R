@@ -105,7 +105,7 @@ output$profileSegDT <- DT::renderDataTable({
   }
 
   segsInclLC <- dataUSED()[, c(1, (sum(defIN()$nlev) + length(defIN()$nlev) + 2):ncol(dataUSED())),
-                         with = FALSE][lc_segs(), on = "ID"]
+                         with = FALSE][lc_segs()[ID %in% chosenIDs()], on = "ID"]
 
   segProfileDT <- rbindlist(
     lapply(seq_along(segLev()),
@@ -116,6 +116,7 @@ output$profileSegDT <- DT::renderDataTable({
                           value.var = 'ID', length)
              out[, Seg := name]
              names(out) <- c("Segment", LCnames, "Seg")
+             out[, Segment := segLev()[[x]][out[, Segment]]]
 
              out[, mget(c("Seg", "Segment", LCnames))]
            }))

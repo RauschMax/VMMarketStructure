@@ -305,7 +305,8 @@ DecHierarchy <- reactive({
                          LevCount = LevelCounts_ordered,
                          attLev_ordered = attLev_ordered,
                          Dt_LevCount = Dt_LevCount,
-                         Dt_Levels = Dt_Levels)
+                         Dt_Levels = Dt_Levels,
+                         Importance = Importance)
     DecHierarchy
   })
 })

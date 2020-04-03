@@ -120,11 +120,15 @@ ui <- kantarPage(
     tabItems(
       tabItem(
         tabName = 'home',
-        h2("HOME TAB (Version - 19.03.2020)"),
+        h2("HOME TAB (Version - 03.04.2020)"),
         # kantarBox(uiOutput("attLev")),
-        kantarBox(h3("What kind of summary should we put here?"),
-                  verbatimTextOutput("test"),
-                  width = 12)
+        fluidRow(column(DT::dataTableOutput("summaryDT"),
+                        width = 6),
+                 valueBoxOutput("nRespOverview", width = 3)),
+        # valueBoxOutput("nRespOverview2", width = 3),
+        fluidRow(column(h3("What other summary should we put here?"),
+                        verbatimTextOutput("test"),
+                        width = 12))
       ),
 
 
@@ -153,28 +157,26 @@ ui <- kantarPage(
           column(
             tabsetPanel(
               tabPanel(
-                title = "Demand Playground",
-                fluidRow(valueBoxOutput("demandBoxPlay", width = 6),
-                         valueBoxOutput("demandPeopleSelected", width = 6),
-                         width = 12),
-                box(
-                  sliderInput("demandThreshold", "Set Demand Threshold",
-                              min = 0, max = 1, value = .9, step = .05),
-                  width = 12)),
-              tabPanel(
                 title = "Demand Overview",
                 fluidRow(valueBoxOutput("demandBox", width = 4),
                          valueBoxOutput("compBox", width = 4),
                          valueBoxOutput("uniquenessBox", width = 4),
                          width = 12),
                 kantarBox(
-                  scatterD3::scatterD3Output("demandGrid"),
+                  scatterD3::scatterD3Output("demandGrid",
+                                             height = "400px"),
                   width = 12)),
               tabPanel(
                 title = "Demand Strategy",
                 div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
                     DT::dataTableOutput("strategyProfile"))
-              )
+              ),
+              tabPanel(
+                title = "Demand Settings",
+                box(
+                  sliderInput("demandThreshold", "Set Demand Threshold",
+                              min = 0, max = 1, value = .9, step = .05),
+                  width = 12))
             ),
             width = 8),
           column(kantarBox(uiOutput("attLev"),
