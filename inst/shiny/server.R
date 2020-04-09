@@ -53,11 +53,15 @@ server <- function(input, output, session) {
   source("./modules/segTab.R",
          local = TRUE)$value
 
-  # ## Segmentation Tab
+  ## Portfolio Tab
+  source("./modules/portfolioTab.R",
+         local = TRUE)$value
+
+  # ## Expanse Tab
   # source("./modules/expanseTab.R",
   #        local = TRUE)$value
   #
-  # ## Segmentation Tab
+  # ## Contract Tab
   # source("./modules/contractTab.R",
   #        local = TRUE)$value
 

@@ -76,12 +76,10 @@ ui <- kantarPage(
     menuItem(tabName = 'demand', text = 'Demand', icon = icon('shopping-basket')),
     menuItem(tabName = 'profile', text = 'Profiling', icon = icon('users')),
     menuItem(tabName = 'buyseg', text = 'Segmentation', icon = icon('filter')),
-    menuItem(tabName = 'expansion', text = 'Expansion', icon = icon('expand')),
-    menuItem(tabName = 'contract', text = 'Contraction', icon = icon('compress')),
+    menuItem(tabName = 'portfolio', text = 'Portfolio', icon = icon('shopping-cart')),
+    # menuItem(tabName = 'contract', text = 'Contraction', icon = icon('compress')),
     div(style = "margin: 25px;",
         textOutput("segSize", inline = FALSE))
-    # ,
-    # menuItem(tabName = 'portfolio', text = 'Portfolio Rankings', icon = icon('trophy'))
   ),
 
   ####Body####
@@ -247,31 +245,51 @@ ui <- kantarPage(
 
 
       tabItem(
-        tabName = 'expansion',
-        kantarBox(div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
-                      DT::dataTableOutput("SKUperformanceDT"),
-                      br(), br(),
-                      "Search for hypothetical new products with maximum demand and minimum portfolio overlap"),
-                  title = "Expansion",
-                  width = 12)
-      ),
-
-
-      tabItem(
-        tabName = 'contract',
-        kantarBox(div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
-                      DT::dataTableOutput("SKUcontractDT1")),
-                  title = "Rank portfolio products by demand in total sample",
-                  width = 4),
-        kantarBox(div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
-                      DT::dataTableOutput("SKUcontractDT2")),
-                  title = "Products by demand in segments",
-                  width = 4),
-        kantarBox(div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
-                      "Count portfolio products with same or higher demand value"),
-                  title = "Contraction",
-                  width = 4)
+        tabName = 'portfolio',
+        tabsetPanel(
+          tabPanel(
+            title = "Portfolio Overview",
+            h4("Overview")
+          ),
+          tabPanel(
+            title = "Portfolio Profile",
+            h4("Profile")
+          ),
+          tabPanel(
+            title = "Define Portfolio",
+            column(actionButton(inputId = "changeProd", label = "Change Product",
+                                icon = icon("wrench")),
+                   actionButton(inputId = "addProd", label = "Add Product",
+                                icon = icon("plus-circle")),
+                   actionButton(inputId = "removeProd", label = "Remove Product",
+                                icon = icon("minus-circle")),
+                   div(style = "overflow-x: scroll; width:100%; font-size:80%;",
+                     DT::dataTableOutput("portfolioDT")),
+                   width = 8),
+            kantarBox(uiOutput("attLevPort"),
+                      width = 4),
+            hr(),
+            fluidRow(verbatimTextOutput("testPortfolio"))
+          )
+        )
       )
+
+
+      # tabItem(
+      #   tabName = 'contract',
+      #   kantarBox(div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
+      #                 DT::dataTableOutput("SKUcontractDT1")),
+      #             title = "Rank portfolio products by demand in total sample",
+      #             width = 4),
+      #   kantarBox(div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
+      #                 DT::dataTableOutput("SKUcontractDT2")),
+      #             title = "Products by demand in segments",
+      #             width = 4),
+      #   kantarBox(div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
+      #                 "Count portfolio products with same or higher demand value"),
+      #             title = "Contraction",
+      #             width = 4)
+      # )
     )
   ),
 
