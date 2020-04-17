@@ -261,7 +261,7 @@ ui <- kantarPage(
                   width = 8)),
                 width = 8),
               column(
-                h3("Selectted Portfolio:"),
+                h3("Portfolio:"),
                 DT::dataTableOutput("showPortfolioDT"),
                 width = 4
               )
