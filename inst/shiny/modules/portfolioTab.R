@@ -102,26 +102,157 @@ output$portfolioDT <- DT::renderDataTable({
   input$changeProd
   input$removeProd
 
-  portDT <- copy(portfolio$DT)
-  portDT <- portDT[, c(names(portDT)) := lapply(.SD,
-                                                function(y) {
-                                                  sapply(seq_along(y),
-                                                         function(x) {
-                                                           defIN()$attLev[[x]][y[x]]
-                                                         })}),
-                   .SDcols = names(portDT)]
+  isolate({
+    portDT <- copy(portfolio$DT)
+    portDT <- portDT[, c(names(portDT)) := lapply(.SD,
+                                                  function(y) {
+                                                    sapply(seq_along(y),
+                                                           function(x) {
+                                                             defIN()$attLev[[x]][y[x]]
+                                                           })}),
+                     .SDcols = names(portDT)]
 
-  DT::datatable(portDT, selection = list(mode = 'single', target = 'column'),
-                escape = FALSE, rownames = names(defIN()$nlev),
+    DT::datatable(portDT, selection = list(mode = 'single', target = 'column'),
+                  escape = FALSE, rownames = names(defIN()$nlev),
+                  style = "default", class = 'compact',
+                  options = list(pageLength = nrow(portDT),
+                                 ordering = FALSE,
+                                 dom = 't',
+                                 initComplete = JS(
+                                   "function(settings, json) {",
+                                   "$(this.api().table().header()).css({'background-color': '#989898',
+                                 'color': '#fff'});",
+                                   "}"))) %>%
+      formatStyle(columns = 0, backgroundColor = "lightgrey", fontWeight = "bold")
+  })
+
+  })
+
+portfolioOverview <- reactive({
+
+  input$addProd
+  input$changeProd
+  input$removeProd
+
+  thresholdUsed <- quantile(demandAnalysis()$Demand_DT_selected[, demand],
+                            input$demandThreshold)
+
+  selIndex_Portfolio_2 <- data.table(
+    sapply(1:ncol(portfolio$DT),
+           function(i) {
+             demandAnalysis()$Demand_DT_used[,
+                            rowSums(sapply(1:length(defIN()$nlev),
+                                           function(x) {
+                                             .SD[[x]] %in% c(NA, 0,
+                                                             unlist(portfolio$DT[x, i,
+                                                                                 with = FALSE]))
+                                           }
+                            )) == length(defIN()$nlev),
+                            .SDcols = paste0("Var", 1:length(defIN()$nlev))]
+           }))
+
+  portfolioDT <- data.table(ID = unique(demandAnalysis()$Demand_DT_used[, ID]))
+  portHelp <- Reduce(merge,
+    lapply(1:ncol(selIndex_Portfolio_2),
+           function(x) {
+
+             Demand_port <- demandAnalysis()$Demand_DT_used[unlist(selIndex_Portfolio_2[, x,
+                                                                       with = FALSE]), ]
+             Demand_port <- Demand_port[demand >= thresholdUsed, .N, by = "ID"]
+             Demand_port[, paste0("Prod", x) := 1]
+
+             Demand_port[portfolioDT, on = "ID"][, mget(c("ID", paste0("Prod", x)))]
+           })
+  )
+
+  portHelp[is.na(portHelp)] <- 0
+  portHelp[, Portfolio := (rowSums(portHelp[, !"ID"]) != 0) * 1]
+
+  portfolioOverview <- list()
+
+  portfolioOverview$Demand <- round(colSums(portHelp[, !"ID"]) /
+                                      nrow(portHelp), 3) * 100
+
+  portfolioOverview$crosstab <- cor(portHelp[, !c("ID", "Portfolio")])
+
+  portfolioOverview
+})
+
+
+## OUTPUTS !------------------------------------------------------------------------------------------------------------
+output$grossDemandBox <- renderValueBox({
+
+  validate(
+    need(portfolioOverview(), "portfolio info is needed")
+  )
+
+  valueBox(value = paste0(format(portfolioOverview()$Demand['Portfolio'],
+                                 nsmall = 1), "%"),
+           subtitle = "Demand for portfolio",
+           color = "red",
+           icon = icon("shopping-basket"))
+})
+
+output$portfolioSingleDemands <- DT::renderDataTable({
+
+  validate(
+    need(portfolioOverview(), "portfolio info is needed")
+  )
+
+  singleDemand <- data.table(Product = names(portfolio$DT),
+                             Demand = portfolioOverview()$Demand[-length(portfolioOverview()$Demand)])
+
+  DT::datatable(singleDemand, selection = list(mode = 'single', target = 'column'),
+                escape = FALSE, rownames = FALSE,
                 style = "default", class = 'compact',
-                options = list(pageLength = nrow(portDT),
+                options = list(pageLength = nrow(singleDemand),
                                ordering = FALSE,
                                dom = 't',
                                initComplete = JS(
                                  "function(settings, json) {",
                                  "$(this.api().table().header()).css({'background-color': '#989898',
                                  'color': '#fff'});",
-                                 "}")))
+                                 "}"))) %>%
+    formatStyle(columns = 1, backgroundColor = "lightgrey", fontWeight = "bold") %>%
+    DT::formatStyle(columns = "Demand",
+                    background = DT::styleColorBar(c(0, 100),
+                                                   '#E10000', angle = 270),
+                    backgroundSize = '90% 50%',
+                    backgroundRepeat = 'no-repeat',
+                    backgroundPosition = 'center')
+})
+
+output$portfolioCrosstab <- DT::renderDataTable({
+
+  validate(
+    need(portfolioOverview(), "portfolio info is needed")
+  )
+
+  crosstabDT <- data.table(Product = names(portfolio$DT),
+                           portfolioOverview()$crosstab)
+  names(crosstabDT) <- c("Product", names(portfolio$DT))
+
+  brks <- quantile(portfolioOverview()$crosstab, probs = seq(.01, .99, .01),
+                   na.rm = TRUE)
+  clrs <- colorRampPalette(c("steelblue", "white", "red"))(length(brks) + 1)[sequence(length(brks) + 1)]
+
+  DT::datatable(crosstabDT, selection = list(mode = 'single', target = 'column'),
+                escape = FALSE, rownames = FALSE,
+                style = "default", class = 'compact',
+                options = list(pageLength = nrow(crosstabDT),
+                               ordering = FALSE,
+                               dom = 't',
+                               initComplete = JS(
+                                 "function(settings, json) {",
+                                 "$(this.api().table().header()).css({'background-color': '#989898',
+                                 'color': '#fff'});",
+                                 "}"))) %>%
+    formatStyle(names(portfolio$DT),  `font-size` = '8px') %>%
+    formatStyle("Product",  `font-size` = '10px') %>%
+    formatStyle(names(portfolio$DT),
+                backgroundColor = styleInterval(brks, clrs),
+                color = "grey") %>%
+    formatRound(names(portfolio$DT),  digits = 2)
   })
 
 output$testPortfolio <- renderPrint({

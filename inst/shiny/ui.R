@@ -249,7 +249,21 @@ ui <- kantarPage(
         tabsetPanel(
           tabPanel(
             title = "Portfolio Overview",
-            h4("Overview")
+            column(
+              fluidRow(
+                valueBoxOutput("grossDemandBox", width = 4)),
+              fluidRow(
+                column(
+                  DT::dataTableOutput("portfolioSingleDemands"),
+                  width = 4),
+                column(
+                  DT::dataTableOutput("portfolioCrosstab"),
+                  width = 8)),
+                width = 8),
+              column(
+                h4("summary"),
+                width = 4
+              )
           ),
           tabPanel(
             title = "Portfolio Profile",
