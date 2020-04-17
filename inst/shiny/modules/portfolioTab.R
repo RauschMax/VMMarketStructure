@@ -42,11 +42,30 @@ output$attLevPort <- renderUI({
 portfolio <- reactiveValues()
 
 observe({
-  portfolio$DT <- data.table(Prod1 = rep(1, length(defIN()$nlev)),
-                             Prod2 = rep(1, length(defIN()$nlev)),
-                             Prod3 = rep(1, length(defIN()$nlev)),
-                             Prod4 = rep(1, length(defIN()$nlev)))
+
+  portfolio$DT <- data.table(sapply(seq_along(defIN()$attLev[[1]]),
+                                    function(i) {
+                                      c(i, rep(1, length(defIN()$nlev[-1])))
+                                    }))
+  setnames(portfolio$DT,
+           names(portfolio$DT),
+           paste0("Prod", seq_along(names(portfolio$DT))))
+
+  # names(portfolio$DT) <- paste0("Prod", seq_along(defIN()$attLev[[1]]))
+
+  portDT <- copy(portfolio$DT)
+  portDT <- portDT[, c(names(portDT)) := lapply(.SD,
+                                                function(y) {
+                                                  sapply(seq_along(y),
+                                                         function(x) {
+                                                           defIN()$attLev[[x]][y[x]]
+                                                         })}),
+                   .SDcols = names(portDT)]
+
+  portfolio$portDT <- portDT
 })
+
+
 
 observeEvent(input$addProd,
              {
@@ -60,23 +79,45 @@ observeEvent(input$addProd,
                }
 
                portfolio$DT <- portfolio$DT[, c(newVar) := rep(1, length(defIN()$nlev))]
+
+               portDT <- copy(portfolio$DT)
+               portDT <- portDT[, c(names(portDT)) := lapply(.SD,
+                                                             function(y) {
+                                                               sapply(seq_along(y),
+                                                                      function(x) {
+                                                                        defIN()$attLev[[x]][y[x]]
+                                                                      })}),
+                                .SDcols = names(portDT)]
+
+               portfolio$portDT <- portDT
              })
 
 observeEvent(input$removeProd,
              {
-               if (input$portfolioDT_columns_selected > 0) {
+               if (is.null(input$portfolioDT_columns_selected)) {
                  showNotification("Please select a column from the table.",
                                   duration = 1, type = "message")
                } else {
                  portfolio$DTold <- portfolio$DT
                  varSel <- names(portfolio$DT)[input$portfolioDT_columns_selected]
                  portfolio$DT <- portfolio$DT[, c(varSel) := NULL]
+
+                 portDT <- copy(portfolio$DT)
+                 portDT <- portDT[, c(names(portDT)) := lapply(.SD,
+                                                               function(y) {
+                                                                 sapply(seq_along(y),
+                                                                        function(x) {
+                                                                          defIN()$attLev[[x]][y[x]]
+                                                                        })}),
+                                  .SDcols = names(portDT)]
+
+                 portfolio$portDT <- portDT
                }
              })
 
 observeEvent(input$changeProd,
              {
-               if (input$portfolioDT_columns_selected > 0) {
+               if (is.null(input$portfolioDT_columns_selected)) {
                  showNotification("Please select a column from the table.",
                                   duration = 1, type = "message")
                } else {
@@ -89,6 +130,17 @@ observeEvent(input$changeProd,
                  varSel <- names(portfolio$DT)[input$portfolioDT_columns_selected]
                  portfolio$DT <- portfolio$DT[, c(varSel) := selectedLevels]
                  setnames(portfolio$DT, varSel, input$prodName)
+
+                 portDT <- copy(portfolio$DT)
+                 portDT <- portDT[, c(names(portDT)) := lapply(.SD,
+                                                               function(y) {
+                                                                 sapply(seq_along(y),
+                                                                        function(x) {
+                                                                          defIN()$attLev[[x]][y[x]]
+                                                                        })}),
+                                  .SDcols = names(portDT)]
+
+                 portfolio$portDT <- portDT
                }
              })
 
@@ -103,14 +155,7 @@ output$portfolioDT <- DT::renderDataTable({
   input$removeProd
 
   isolate({
-    portDT <- copy(portfolio$DT)
-    portDT <- portDT[, c(names(portDT)) := lapply(.SD,
-                                                  function(y) {
-                                                    sapply(seq_along(y),
-                                                           function(x) {
-                                                             defIN()$attLev[[x]][y[x]]
-                                                           })}),
-                     .SDcols = names(portDT)]
+    portDT <- portfolio$portDT
 
     DT::datatable(portDT, selection = list(mode = 'single', target = 'column'),
                   escape = FALSE, rownames = names(defIN()$nlev),
@@ -134,13 +179,12 @@ portfolioOverview <- reactive({
   input$changeProd
   input$removeProd
 
-  thresholdUsed <- quantile(demandAnalysis()$Demand_DT_selected[, demand],
-                            input$demandThreshold)
+  Demand_DT_used <- Demand_DT()[ID %in% chosenIDs(), ]
 
   selIndex_Portfolio_2 <- data.table(
     sapply(1:ncol(portfolio$DT),
            function(i) {
-             demandAnalysis()$Demand_DT_used[,
+             Demand_DT_used[,
                             rowSums(sapply(1:length(defIN()$nlev),
                                            function(x) {
                                              .SD[[x]] %in% c(NA, 0,
@@ -151,14 +195,17 @@ portfolioOverview <- reactive({
                             .SDcols = paste0("Var", 1:length(defIN()$nlev))]
            }))
 
-  portfolioDT <- data.table(ID = unique(demandAnalysis()$Demand_DT_used[, ID]))
+  portfolioDT <- data.table(ID = unique(Demand_DT_used[, ID]))
   portHelp <- Reduce(merge,
     lapply(1:ncol(selIndex_Portfolio_2),
            function(x) {
 
-             Demand_port <- demandAnalysis()$Demand_DT_used[unlist(selIndex_Portfolio_2[, x,
+             Demand_port <- Demand_DT_used[unlist(selIndex_Portfolio_2[, x,
                                                                        with = FALSE]), ]
-             Demand_port <- Demand_port[demand >= thresholdUsed, .N, by = "ID"]
+             thresholdUsed_PO <- quantile(Demand_port[, demand],
+                                          input$demandThreshold)
+
+             Demand_port <- Demand_port[demand >= thresholdUsed_PO, .N, by = "ID"]
              Demand_port[, paste0("Prod", x) := 1]
 
              Demand_port[portfolioDT, on = "ID"][, mget(c("ID", paste0("Prod", x)))]
@@ -228,9 +275,9 @@ output$portfolioCrosstab <- DT::renderDataTable({
     need(portfolioOverview(), "portfolio info is needed")
   )
 
-  crosstabDT <- data.table(Product = names(portfolio$DT),
-                           portfolioOverview()$crosstab)
-  names(crosstabDT) <- c("Product", names(portfolio$DT))
+  crosstabDT <- data.table(portfolioOverview()$crosstab,
+                           Product = names(portfolio$DT))
+  names(crosstabDT) <- c(names(portfolio$DT), "Product")
 
   brks <- quantile(portfolioOverview()$crosstab, probs = seq(.01, .99, .01),
                    na.rm = TRUE)
@@ -247,16 +294,45 @@ output$portfolioCrosstab <- DT::renderDataTable({
                                  "$(this.api().table().header()).css({'background-color': '#989898',
                                  'color': '#fff'});",
                                  "}"))) %>%
-    formatStyle(names(portfolio$DT),  `font-size` = '8px') %>%
-    formatStyle("Product",  `font-size` = '10px') %>%
+    formatStyle(names(portfolio$DT),
+                'font-size' = '8px') %>%
+    formatStyle("Product",
+                backgroundColor = "lightgrey",
+                fontWeight = "bold") %>%
     formatStyle(names(portfolio$DT),
                 backgroundColor = styleInterval(brks, clrs),
                 color = "grey") %>%
     formatRound(names(portfolio$DT),  digits = 2)
   })
 
+output$showPortfolioDT <- DT::renderDataTable({
+  summaryDT <- melt(data.table(Att = names(defIN()$attLev),
+                               portfolio$portDT), id.vars = "Att")
+
+  names(summaryDT) <- c("Attribute", "Product", "Level")
+
+  DT::datatable(summaryDT, selection = list(mode = 'none'),
+                escape = FALSE, rownames = FALSE,
+                style = "default", class = 'compact',
+                options = list(pageLength = length(defIN()$nlev),
+                               ordering = FALSE,
+                               dom = 'tp',
+                               initComplete = JS(
+                                 "function(settings, json) {",
+                                 "$(this.api().table().header()).css({'background-color': '#989898',
+                                 'color': '#fff'});",
+                                 "}"),
+                               lengthMenu = list(c(length(defIN()$nlev), -1),
+                                                 c('1 product', 'All'))))
+})
+
 output$testPortfolio <- renderPrint({
 
-  input$portfolioDT_columns_selected
+  list(input$portfolioDT_columns_selected,
+       names(portfolio$DT)[input$portfolioDT_columns_selected],
+       portfolio$DT,
+       portfolio$portDT,
+       melt(data.table(Att = names(defIN()$attLev),
+                       portfolio$portDT), id.vars = "Att"))
 
 })

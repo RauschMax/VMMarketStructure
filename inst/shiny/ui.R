@@ -261,7 +261,8 @@ ui <- kantarPage(
                   width = 8)),
                 width = 8),
               column(
-                h4("summary"),
+                h3("Selectted Portfolio:"),
+                DT::dataTableOutput("showPortfolioDT"),
                 width = 4
               )
           ),
@@ -271,17 +272,17 @@ ui <- kantarPage(
           ),
           tabPanel(
             title = "Define Portfolio",
-            column(actionButton(inputId = "changeProd", label = "Change Product",
-                                icon = icon("wrench")),
-                   actionButton(inputId = "addProd", label = "Add Product",
+            column(actionButton(inputId = "addProd", label = "Add Product",
                                 icon = icon("plus-circle")),
                    actionButton(inputId = "removeProd", label = "Remove Product",
                                 icon = icon("minus-circle")),
                    div(style = "overflow-x: scroll; width:100%; font-size:80%;",
                      DT::dataTableOutput("portfolioDT")),
                    width = 8),
-            kantarBox(uiOutput("attLevPort"),
-                      width = 4),
+            column(actionButton(inputId = "changeProd", label = "Change Product",
+                                icon = icon("wrench")),
+                   uiOutput("attLevPort"),
+                   width = 4),
             hr(),
             fluidRow(verbatimTextOutput("testPortfolio"))
           )
