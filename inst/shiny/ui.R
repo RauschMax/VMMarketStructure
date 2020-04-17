@@ -158,7 +158,7 @@ ui <- kantarPage(
                 title = "Demand Overview",
                 fluidRow(valueBoxOutput("demandBox", width = 4),
                          valueBoxOutput("compBox", width = 4),
-                         valueBoxOutput("uniquenessBox", width = 4),
+                         # valueBoxOutput("uniquenessBox", width = 4),
                          width = 12),
                 kantarBox(
                   scatterD3::scatterD3Output("demandGrid",
@@ -249,22 +249,23 @@ ui <- kantarPage(
         tabsetPanel(
           tabPanel(
             title = "Portfolio Overview",
-            column(
-              fluidRow(
-                valueBoxOutput("grossDemandBox", width = 4)),
-              fluidRow(
-                column(
-                  DT::dataTableOutput("portfolioSingleDemands"),
-                  width = 4),
-                column(
-                  DT::dataTableOutput("portfolioCrosstab"),
-                  width = 8)),
+            fluidRow(
+              column(
+                fluidRow(
+                  valueBoxOutput("grossDemandBox", width = 4)),
+                fluidRow(
+                  column(
+                    DT::dataTableOutput("portfolioSingleDemands"),
+                    width = 4),
+                  column(
+                    DT::dataTableOutput("portfolioCrosstab"),
+                    width = 8)),
                 width = 8),
               column(
                 h3("Portfolio:"),
                 DT::dataTableOutput("showPortfolioDT"),
                 width = 4
-              )
+              ))
           ),
           tabPanel(
             title = "Portfolio Profile",
@@ -272,21 +273,22 @@ ui <- kantarPage(
           ),
           tabPanel(
             title = "Define Portfolio",
-            column(actionButton(inputId = "addProd", label = "Add Product",
-                                icon = icon("plus-circle")),
-                   actionButton(inputId = "removeProd", label = "Remove Product",
-                                icon = icon("minus-circle")),
-                   div(style = "overflow-x: scroll; width:100%; font-size:80%;",
-                     DT::dataTableOutput("portfolioDT")),
-                   width = 8),
-            column(actionButton(inputId = "changeProd", label = "Change Product",
-                                icon = icon("wrench")),
-                   uiOutput("attLevPort"),
-                   width = 4),
-            hr(),
-            fluidRow(verbatimTextOutput("testPortfolio"))
+            fluidRow(
+              column(actionButton(inputId = "addProd", label = "Add Product",
+                                  icon = icon("plus-circle")),
+                     actionButton(inputId = "removeProd", label = "Remove Product",
+                                  icon = icon("minus-circle")),
+                     div(style = "overflow-x: scroll; width:100%; font-size:80%;",
+                         DT::dataTableOutput("portfolioDT")),
+                     width = 8),
+              column(actionButton(inputId = "changeProd", label = "Change Product",
+                                  icon = icon("wrench")),
+                     uiOutput("attLevPort"),
+                     width = 4))
           )
-        )
+        ),
+        hr(),
+        fluidRow(verbatimTextOutput("testPortfolio"))
       )
 
 
