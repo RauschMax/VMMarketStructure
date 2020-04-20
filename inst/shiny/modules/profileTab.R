@@ -89,16 +89,16 @@ output$profileLevelDT <- DT::renderDataTable({
   DTout <- DT::datatable(levelProfileDT, selection = list(mode = 'single', target = 'column'),
                          filter = "none", autoHideNavigation = TRUE, rownames = FALSE,
                          extensions = 'Buttons', escape = FALSE, style = "default", class = 'compact',
-                         options = list(pageLength = 20,
-                                        dom = 'lrtipB',
+                         options = list(pageLength = 18,
+                                        dom = 'lrtpB',
                                         buttons = c('csv', 'excel'),
                                         initComplete = JS(
                                           "function(settings, json) {",
                                           "$(this.api().table().header()).css({'background-color': '#989898',
                                           'color': '#fff'});",
                                           "}"),
-                                        lengthMenu = list(c(5, 20, -1),
-                                                          c('5', '20', 'All'))
+                                        lengthMenu = list(c(18, -1),
+                                                          c('Part', 'All'))
                                         )
                          ) %>%
     DT::formatPercentage(
@@ -163,11 +163,22 @@ observe({
   )) == length(defIN()$nlev),
   .SDcols = paste0("Var", 1:length(defIN()$nlev))]
 
-  # ASSUPMTION take 90% quantile as "with demand
-  proChoiceProfile_IDs <- unique(Demand_DT_used[selIndex_DT, ][demand > quantile(Demand_DT_used[selIndex_DT,
-                                                                                                demand], .9), ID])
+  Demand_DT_selected <- Demand_DT_used[selIndex_DT, ]
+
+  thresholdUsed <- quantile(Demand_DT_selected[, demand],
+                            input$demandThreshold)
+
+  proChoiceProfile_IDs <- unique(Demand_DT_selected[demand > thresholdUsed, ID])
 
   proChoiceProfile <- segData[ID %in% proChoiceProfile_IDs]
+
+  proChoiceProfile[, c(names(proChoiceProfile)[-1]) := lapply(seq_along(.SD),
+                                                              function(x) {
+                                                                factor(.SD[[x]],
+                                                                       levels = seq_along(segLev()[[x]]),
+                                                                       labels = segLev()[[x]])
+                                                              }),
+                   .SDcols = names(proChoiceProfile)[-1]]
 
   # Profile of considerers of selected level
   profList <- lapply(lapply(proChoiceProfile[, -1], table, useNA = "ifany"), prop.table)
@@ -179,14 +190,13 @@ observe({
 
            output[[id]] <- DT::renderDataTable({
              dt <- data.table(profList[[x]])
-             # names(dt) <- Imp_ordered()$attLev_ordered[[x]]
 
              DT::datatable(dt, selection = list(mode = 'single', target = 'column'),
                            filter = "none", autoHideNavigation = TRUE, rownames = FALSE,
                            colnames = names(segLev())[x],
                            escape = FALSE, style = "default", class = 'compact',
                            options = list(columnDefs = list(list(width = '200px', targets = 0)),
-                                          # pageLength = 1,
+                                          pageLength = nrow(dt),
                                           ordering = FALSE,
                                           dom = 't',
                                           initComplete = JS(

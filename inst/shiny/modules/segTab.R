@@ -128,16 +128,17 @@ output$profileSegDT <- DT::renderDataTable({
 
   DT::datatable(segProfileDT, selection = list(mode = 'single', target = 'column'),
                 filter = "none", autoHideNavigation = TRUE, rownames = TRUE,
-                escape = FALSE, style = "default", class = 'compact',
-                options = list(pageLength = 25,
-                               dom = 'lrtip',
+                extensions = 'Buttons', escape = FALSE, style = "default", class = 'compact',
+                options = list(pageLength = 22,
+                               dom = 'lrtpB',
+                               buttons = c('csv', 'excel'),
                                initComplete = JS(
                                  "function(settings, json) {",
                                  "$(this.api().table().header()).css({'background-color': '#989898',
                                  'color': '#fff'});",
                                  "}"),
-                               lengthMenu = list(c(5, 25, -1),
-                                                 c('5', '25', 'All')))) %>%
+                               lengthMenu = list(c(22, -1),
+                                                 c('Part', 'All')))) %>%
     formatStyle(LCnames, backgroundColor = styleInterval(brks, clrs))
 })
 
@@ -191,16 +192,17 @@ output$profileChoDT <- DT::renderDataTable({
 
   DT::datatable(choProfileDT, selection = list(mode = 'single', target = 'column'),
                 filter = "none", autoHideNavigation = TRUE, rownames = TRUE,
-                escape = FALSE, style = "default", class = 'compact',
-                options = list(pageLength = 25,
-                               dom = 'lrtip',
+                extensions = 'Buttons', escape = FALSE, style = "default", class = 'compact',
+                options = list(pageLength = 22,
+                               dom = 'lrtpB',
+                               buttons = c('csv', 'excel'),
                                initComplete = JS(
                                  "function(settings, json) {",
                                  "$(this.api().table().header()).css({'background-color': '#989898',
                                  'color': '#fff'});",
                                  "}"),
-                               lengthMenu = list(c(5, 25, -1),
-                                                 c('5', '25', 'All')))) %>%
+                               lengthMenu = list(c(22, -1),
+                                                 c('Part', 'All')))) %>%
     formatStyle(LCnames, backgroundColor = styleInterval(brks, clrs))
 })
 

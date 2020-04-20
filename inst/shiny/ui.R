@@ -118,14 +118,13 @@ ui <- kantarPage(
     tabItems(
       tabItem(
         tabName = 'home',
-        h2("HOME TAB (Version - 03.04.2020)"),
+        h2("HOME TAB (Version - 20.04.2020)"),
         # kantarBox(uiOutput("attLev")),
         fluidRow(column(DT::dataTableOutput("summaryDT"),
                         width = 6),
                  valueBoxOutput("nRespOverview", width = 3)),
         # valueBoxOutput("nRespOverview2", width = 3),
-        fluidRow(column(h3("What other summary should we put here?"),
-                        verbatimTextOutput("test"),
+        fluidRow(column(verbatimTextOutput("test"),
                         width = 12))
       ),
 
@@ -167,7 +166,7 @@ ui <- kantarPage(
               tabPanel(
                 title = "Demand Strategy",
                 div(style = "overflow-y: scroll; height: 80vh; font-size: 80%",
-                    DT::dataTableOutput("strategyProfile"))
+                    DT::dataTableOutput("strategyProfile", width = "99%"))
               ),
               tabPanel(
                 title = "Demand Settings",
@@ -269,7 +268,8 @@ ui <- kantarPage(
           ),
           tabPanel(
             title = "Portfolio Profile",
-            h4("Profile")
+            div(style = "overflow-y: scroll; height:80vh; font-size:80%;",
+                DT::dataTableOutput("portfolioProfileDT"))
           ),
           tabPanel(
             title = "Define Portfolio",

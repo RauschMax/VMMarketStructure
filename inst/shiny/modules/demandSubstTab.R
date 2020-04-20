@@ -219,18 +219,21 @@ output$strategyProfile <- DT::renderDataTable({
 
   DT::datatable(stratDT, selection = list(mode = 'single', target = 'row'),
                 filter = "none", autoHideNavigation = TRUE, rownames = FALSE,
-                escape = FALSE, style = "default", class = 'compact',
+                extensions = 'Buttons', escape = FALSE, style = "default", class = 'compact',
                 options = list(columnDefs = list(list(className = 'dt-right', targets = 2),
                                                  list(width = '40%', targets = 2)),
                                autoWidth = TRUE,
-                               pageLength = nrow(stratDT),
+                               pageLength = 23,
                                ordering = FALSE,
-                               dom = 't',
+                               dom = 'lrtpB',
+                               buttons = c('csv', 'excel'),
                                initComplete = JS(
                                  "function(settings, json) {",
                                  "$(this.api().table().header()).css({'background-color': '#989898',
                                              'color': '#fff'});",
-                                 "}"))) %>%
+                                 "}"),
+                               lengthMenu = list(c(23, -1),
+                                                 c('Part', 'All')))) %>%
     DT::formatRound("Change", digits = 1) %>%
     DT::formatStyle(columns = "Change",
                     background = color_from_middle(stratDT$Change, 'red', 'blue'),
