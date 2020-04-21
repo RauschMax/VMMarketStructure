@@ -96,7 +96,7 @@ ui <- kantarPage(
                                    top: 33%;
                                    left: 33%;
                                    right: 33%;}
-              .text-left {height: 93vh !important;}
+              .text-left {height: 90vh !important;}
               .dropdown {list-style-type: none;
                          margin-top: 2%;
                          margin-right: 20px;
@@ -118,21 +118,22 @@ ui <- kantarPage(
     tabItems(
       tabItem(
         tabName = 'home',
-        h2("HOME TAB (Version - 20.04.2020)"),
+        h2("HOME TAB (Version - 21.04.2020)"),
         # kantarBox(uiOutput("attLev")),
         fluidRow(column(DT::dataTableOutput("summaryDT"),
                         width = 6),
-                 valueBoxOutput("nRespOverview", width = 3)),
+                 valueBoxOutput("nRespOverview", width = 3))
+        # ,
         # valueBoxOutput("nRespOverview2", width = 3),
-        fluidRow(column(verbatimTextOutput("test"),
-                        width = 12))
+        # fluidRow(column(verbatimTextOutput("test"),
+        #                 width = 12))
       ),
 
 
       tabItem(
         tabName = 'decision',
         kantarBox(div(style = "overflow-y:scroll; overflow-x:auto;
-                           height:70vh; font-size:80%; margin-bottom:10px;",
+                           height:69vh; font-size:80%; margin-bottom:10px;",
                       DT::dataTableOutput("decMat"),
                       downloadButton("DownDecMat")),
                   width = 12),
@@ -176,14 +177,16 @@ ui <- kantarPage(
                   width = 12))
             ),
             width = 8),
-          column(kantarBox(uiOutput("attLev"),
+          column(kantarBox(div(style = "overflow-y: scroll; height:74vh; font-size:100%;",
+                               uiOutput("attLev")),
                            title = "Select a Product",
                            width = 12),
                  width = 4)
         ),
-        br(),
-        hr(),
-        fluidRow(verbatimTextOutput("testDemand"))
+        br()
+        # ,
+        # hr(),
+        # fluidRow(verbatimTextOutput("testDemand"))
       ),
 
 
@@ -211,7 +214,8 @@ ui <- kantarPage(
                           uiOutput("profProdSegUI")),
                       title = "Profile",
                       width = 8),
-            kantarBox(uiOutput("attLev2"),
+            kantarBox(div(style = "overflow-y: scroll; height:70vh; font-size:100%;",
+                          uiOutput("attLev2")),
                       title = "Select a Product",
                       width = 4))
         )
@@ -286,9 +290,10 @@ ui <- kantarPage(
                      uiOutput("attLevPort"),
                      width = 4))
           )
-        ),
-        hr(),
-        fluidRow(verbatimTextOutput("testPortfolio"))
+        )
+        # ,
+        # hr(),
+        # fluidRow(verbatimTextOutput("testPortfolio"))
       )
 
 

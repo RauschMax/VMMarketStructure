@@ -153,7 +153,7 @@ output$demandGrid <- scatterD3::renderScatterD3({
 output$strategyProfile <- DT::renderDataTable({
 
   validate(
-    need(lc_segs(), "Please load the data.")
+    need(demandAnalysis(), "Demand needs to be calculated.")
   )
 
   demand_selected <- demandAnalysis()$meanDemand

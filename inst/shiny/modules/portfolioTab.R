@@ -204,9 +204,9 @@ portfolioOverview <- reactive({
                                           input$demandThreshold)
 
              Demand_port <- Demand_port[demand >= thresholdUsed_PO, .N, by = "ID"]
-             Demand_port[, paste0("Prod", x) := 1]
+             Demand_port[, names(portfolio$DT)[x] := 1]
 
-             Demand_port[portfolioDT, on = "ID"][, mget(c("ID", paste0("Prod", x)))]
+             Demand_port[portfolioDT, on = "ID"][, mget(c("ID", names(portfolio$DT)[x]))]
            })
   )
 
@@ -248,7 +248,8 @@ portfolioOverview <- reactive({
 
   portfolioProfile_Help <- Reduce(function(...) {
     merge(..., by = c("Segment", "Group"), all = TRUE)
-  }, portfolioProfile)
+  },
+  portfolioProfile)
 
 
   portfolioProfileDT <- portfolioProfile_Help[portfolioProfileDT, on = c("Segment", "Group")]

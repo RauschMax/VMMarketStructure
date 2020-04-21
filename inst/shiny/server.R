@@ -78,7 +78,7 @@ server <- function(input, output, session) {
 
   output$test <- renderPrint({
 
-    segLev()
+    "For Testing"
 
   })
 
